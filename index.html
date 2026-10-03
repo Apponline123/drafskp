@@ -231,7 +231,7 @@ $('fo').onchange=async e=>{for(const f of e.target.files)cur.foto.push(await res
 $('th').onclick=e=>{const i=e.target.dataset.i;if(i!=null){cur.foto.splice(i,1);thumbs();auto()}};
 $('blogo').onclick=()=>$('lg').click();
 $('lg').onchange=async e=>{if(e.target.files[0]){S.logo=await resize(e.target.files[0],400,'image/png');S.logoSource='custom';$('hl').src=S.logo;persist();render();stat('Logo diganti')}};
-$('bsave').onclick=()=>{clearTimeout(timer);if(save()){newDoc();stat('✓ Tersimpan — lembar baru siap')}};$('bpdf').onclick=pdf;$('bdoc').onclick=word;$('bnew').onclick=()=>{save();newDoc();tab('ed');scrollTo(0,0)};
+$('bsave').onclick=()=>{clearTimeout(timer);if(save()){newDoc();stat('✓ Tersimpan — lembar baru siap')}};$('bpdf').onclick=()=>pdf();$('bdoc').onclick=()=>word();$('bnew').onclick=()=>{save();newDoc();tab('ed');scrollTo(0,0)};
 $('mergepdf').onclick=()=>{const docs=selectedDocs();if(docs)pdf(docs)};
 $('mergeword').onclick=()=>{const docs=selectedDocs();if(docs)word(docs)};
 $('list').onchange=e=>{const id=e.target.dataset.select;if(!id)return;const d=S.docs.find(x=>x.id===id);if(!d)return;
