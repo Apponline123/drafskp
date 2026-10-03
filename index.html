@@ -114,6 +114,7 @@ input[type=file]{background:#f8fbfc}
 </section>
 <section id="hi" class="tab">
 <input id="q" placeholder="Cari kegiatan / tempat / tanggal…">
+<div class="history-tools"><span>Pindahkan data antarperangkat dengan file cadangan. Impor akan menggabungkan data, bukan menghapus riwayat ini.</span><button class="btn" id="backupout">⬇ Ekspor cadangan</button><button class="btn g" id="backupin">⬆ Impor cadangan</button><input type="file" id="backupfile" accept="application/json,.json" hidden></div>
 <div class="history-tools"><span id="selcount">Pilih beberapa kegiatan, termasuk dari tanggal berbeda, untuk digabung.</span><button class="btn o" id="mergepdf" disabled>Unduh gabungan PDF</button><button class="btn w" id="mergeword" disabled>Unduh gabungan Word</button></div>
 <div id="list"></div>
 </section>
@@ -209,7 +210,18 @@ async function pdf(docs=[getD()]){stat('Membuat PDF…');const d=docs[0];
  await out(docs.length>1?mergedFname(docs,'pdf'):fname(d,'pdf'),p.output('blob'))}catch(e){console.error(e);alert('Gagal membuat PDF: '+(e&&e.message||e))}}
 function dx(t,o={}){const ind=o.ind||0,h=o.h||0,x=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
  return `<w:p><w:pPr><w:jc w:val="${o.c?'center':'both'}"/><w:spacing w:after="${o.a??60}" w:line="360" w:lineRule="auto"/><w:ind w:left="${ind}" w:hanging="${h}"/>${o.tab?'<w:tabs><w:tab w:val="left" w:pos="1900"/></w:tabs>':''}</w:pPr><w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/>${o.b?'<w:b/>':''}${o.u?'<w:u w:val="single"/>':''}<w:sz w:val="${o.sz||24}"/></w:rPr><w:t xml:space="preserve">${x(t)}</w:t></w:r></w:p>`}
-async function word(docs=[getD()]){const d=docs[0],P=[];
+async function word(docs=[getD()]){const d=docs[0],P=[],images=[];
+ const imageParagraph=async(src)=>{
+  const match=src.match(/^data:image\/(jpeg|png);base64,([A-Za-z0-9+/=]+)$/);
+  if(!match)throw new Error('Format foto tidak didukung untuk Word');
+  const im=await loadImg(src);if(!im)throw new Error('Foto dokumentasi tidak dapat dibaca');
+  const ext=match[1]==='jpeg'?'jpg':'png',id='rIdImg'+(images.length+1),name='image'+images.length+'.'+ext;
+  const bytes=Uint8Array.from(atob(match[2]),c=>c.charCodeAt(0));
+  images.push({id,name,ext,bytes});
+  const maxW=5.8*914400,maxH=4*914400,scale=Math.min(maxW/(im.naturalWidth||im.width),maxH/(im.naturalHeight||im.height));
+  const cx=Math.round((im.naturalWidth||im.width)*scale),cy=Math.round((im.naturalHeight||im.height)*scale);
+  return `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="120" w:line="360" w:lineRule="auto"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${images.length}" name="${name}"/><wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="${images.length}" name="${name}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${id}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`
+ };
  P.push(dx('BUKTI DUKUNG SKP',{c:1,b:1,u:1,sz:28,a:720}));
  if(docs.length===1)P.push(dx('Hari / Tanggal\t: '+hari(d.tgl)+', '+fmtTgl(d.tgl),{tab:1,ind:1900,h:1900,a:120}));
  for(const [index,item] of docs.entries()){
@@ -217,12 +229,16 @@ async function word(docs=[getD()]){const d=docs[0],P=[];
   const info=docs.length===1?[['Pukul',pukul(item)],['Kegiatan',item.keg],['Tempat',item.tmp],['Hasil','']]:[['Pukul',pukul(item)],['Tempat',item.tmp],['Hasil','']];
   info.forEach(r=>P.push(dx(r[0]+'\t: '+(r[1]||''),{tab:1,ind:1900,h:1900,a:0})));
   parse(item.has||'').forEach(r=>P.push(dx(r.l,r.c==='h'?{b:1}:r.c==='n'?{ind:400,h:400}:r.c==='s'?{ind:800,h:400}:{})));
+  if((item.foto||[]).length){P.push(dx('DOKUMENTASI',{c:1,b:1,u:1,a:120}));for(const foto of item.foto)P.push(await imageParagraph(foto))}
  }
  if(d.nm||d.anm){P.push(dx(''),dx('Mengetahui,\t\t\t\t'+d.kota+', '+fmtTgl(d.tgl),{c:0,a:0}),dx(d.ajab+'\t'+(d.jab||'Pelaksana'),{a:0}),dx(''),dx(''),dx(d.anm+'\t\t\t\t'+d.nm,{b:1,a:0}),dx((d.anip?'NIP. '+d.anip:'')+'\t\t'+(d.nip?'NIP. '+d.nip:''),{a:0}))}
  const z=new JSZip();
  z.file('_rels/.rels','<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
- z.file('[Content_Types].xml','<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');
- z.file('word/document.xml','<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'+P.join('')+'<w:sectPr><w:pgSz w:w="12189" w:h="18709"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/><w:pgBorders w:offsetFrom="page"><w:top w:val="single" w:sz="16" w:space="18" w:color="0B3D91"/><w:left w:val="single" w:sz="16" w:space="18" w:color="0B3D91"/><w:bottom w:val="single" w:sz="16" w:space="18" w:color="0B3D91"/><w:right w:val="single" w:sz="16" w:space="18" w:color="0B3D91"/></w:pgBorders></w:sectPr></w:body></w:document>');
+ const types=['<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>','<Default Extension="xml" ContentType="application/xml"/>'];
+ for(const ext of new Set(images.map(im=>im.ext)))types.push(`<Default Extension="${ext}" ContentType="image/${ext==='jpg'?'jpeg':ext}"/>`);
+ z.file('[Content_Types].xml','<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+types.join('')+'<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');
+ z.file('word/document.xml','<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><w:body>'+P.join('')+'<w:sectPr><w:pgSz w:w="12189" w:h="18709"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/><w:pgBorders w:offsetFrom="page"><w:top w:val="single" w:sz="16" w:space="18" w:color="0B3D91"/><w:left w:val="single" w:sz="16" w:space="18" w:color="0B3D91"/><w:bottom w:val="single" w:sz="16" w:space="18" w:color="0B3D91"/><w:right w:val="single" w:sz="16" w:space="18" w:color="0B3D91"/></w:pgBorders></w:sectPr></w:body></w:document>');
+ if(images.length){z.file('word/_rels/document.xml.rels','<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+images.map(im=>`<Relationship Id="${im.id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${im.name}"/>`).join('')+'</Relationships>');for(const im of images)z.file('word/media/'+im.name,im.bytes)}
  out(docs.length>1?mergedFname(docs,'docx'):fname(d,'docx'),await z.generateAsync({type:'blob'}))}
 function resize(file,max,type){return new Promise(r=>{const i=new Image,u=URL.createObjectURL(file);i.onload=()=>{const k=Math.min(1,max/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);URL.revokeObjectURL(u);r(c.toDataURL(type,.75))};i.src=u})}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>tab(b.dataset.t));
@@ -234,6 +250,17 @@ $('lg').onchange=async e=>{if(e.target.files[0]){S.logo=await resize(e.target.fi
 $('bsave').onclick=()=>{clearTimeout(timer);if(save()){newDoc();stat('✓ Tersimpan — lembar baru siap')}};$('bpdf').onclick=()=>pdf();$('bdoc').onclick=()=>word();$('bnew').onclick=()=>{save();newDoc();tab('ed');scrollTo(0,0)};
 $('mergepdf').onclick=()=>{const docs=selectedDocs();if(docs)pdf(docs)};
 $('mergeword').onclick=()=>{const docs=selectedDocs();if(docs)word(docs)};
+$('backupout').onclick=async()=>{const stamp=new Date().toISOString().slice(0,10);await out('cadangan-skp-'+stamp+'.json',new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),docs:S.docs,logo:S.logoSource==='custom'?S.logo:null,logoSource:S.logoSource==='custom'?'custom':null},null,2)],{type:'application/json'}))};
+$('backupin').onclick=()=>$('backupfile').click();
+$('backupfile').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;
+ try{const backup=JSON.parse(await file.text());if(!backup||!Array.isArray(backup.docs)||backup.docs.some(d=>!d||typeof d!=='object'||typeof d.id!=='string'||!d.id))throw new Error('Format file cadangan tidak valid');
+  const merged=new Map(S.docs.map(d=>[d.id,d]));let added=0,updated=0;
+  for(const d of backup.docs){const old=merged.get(d.id);if(!old){merged.set(d.id,d);added++}else if((d.upd||0)>(old.upd||0)){merged.set(d.id,d);updated++}}
+  const previous=S.docs,previousLogo=S.logo,previousLogoSource=S.logoSource;S.docs=[...merged.values()];if(backup.logoSource==='custom'&&typeof backup.logo==='string'&&S.logoSource!=='custom'){S.logo=backup.logo;S.logoSource='custom';$('hl').src=logo()}
+  if(!persist()){S.docs=previous;S.logo=previousLogo;S.logoSource=previousLogoSource;$('hl').src=logo();render();return}
+  for(const d of backup.docs)if(S.docs.includes(d))cloud(d);
+  render();stat('Cadangan digabung: '+added+' baru, '+updated+' diperbarui; riwayat lokal dipertahankan')
+ }catch(err){console.error('Gagal mengimpor cadangan:',err);alert('Gagal mengimpor cadangan: '+(err&&err.message||err))}};
 $('list').onchange=e=>{const id=e.target.dataset.select;if(!id)return;const d=S.docs.find(x=>x.id===id);if(!d)return;
  if(e.target.checked){if(!d.tgl){e.target.checked=false;stat('Isi tanggal kegiatan sebelum memilih untuk digabung');return}selectedIds.add(id)}
  else selectedIds.delete(id);
