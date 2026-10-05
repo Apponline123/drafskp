@@ -6,6 +6,11 @@ workers_dev = true
 [vars]
 ALLOWED_ORIGIN = "https://apponline123.github.io"
 
+[[d1_databases]]
+binding = "SKP_DB"
+database_name = "skp-cloud-sync"
+database_id = "bb5c5ed8-598e-423b-891a-eeeff4305cb7"
+
 [[ratelimits]]
 name = "AI_RATE_LIMIT"
 # Replace with a positive integer unique to this Cloudflare account.
