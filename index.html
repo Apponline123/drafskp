@@ -365,7 +365,7 @@ function renderDashboard(){
  $('chartTotal').textContent=total+' kegiatan tercatat';
  $('chartSummary').textContent=total?filled+' dari 4 termin sudah memiliki kegiatan. '+(topTerm?'Kegiatan terbanyak ada di Termin '+topTerm+' ('+top+' kegiatan).':''):'Belum ada kegiatan yang disimpan. Mulai tambahkan kegiatan di Editor, grafik progres akan diperbarui otomatis.';
 }
-function minutesKey(key){return activeAccount?key+'_'+activeAccount.id:key}
+function minutesKey(key){return activeAccount&&!activeAccount.useLegacyMinutes?key+'_'+activeAccount.id:key}
 function readAccounts(){const raw=localStorage.getItem(ACCOUNTS_KEY);if(!raw)return[];const parsed=JSON.parse(raw);if(!Array.isArray(parsed))throw new Error('Daftar akun lokal tidak valid.');return parsed}
 function loginMessage(message,isError=false){$('loginStatus').textContent=message;$('loginStatus').style.color=isError?'#b42318':'var(--mu)'}
 function randomHex(bytes=16){const data=new Uint8Array(bytes);crypto.getRandomValues(data);return Array.from(data,x=>x.toString(16).padStart(2,'0')).join('')}
@@ -397,20 +397,12 @@ async function registerAccount(){
  $('registerButton').disabled=$('loginButton').disabled=true;loginMessage('Membuat akun…');
  try{
   const accounts=readAccounts(),normalizedName=username.toLocaleLowerCase('id-ID');
-  if(accounts.some(account=>account.normalizedName===normalizedName)){loginMessage('Nama pengguna sudah dipakai di perangkat ini. Silakan masuk.',true);return}
-  const id=randomHex(16),salt=randomHex(),storageKey='lkh_user_'+id;
-  const account={id,username,normalizedName,salt,passwordHash:await passwordDigest(password,salt),storageKey,photo:pendingProfilePhoto};
-  if(accounts.length===0){
-   const legacy=localStorage.getItem('lkh_v1');
-   if(legacy)localStorage.setItem(storageKey,legacy);
-   for(const key of ['notulen_draft_v1','notulen_history_v1','notulen_current_id_v1','notulen_ai_summary_v1','notulen_ai_worker_endpoint_v1']){
-    const value=localStorage.getItem(key);if(value!==null)localStorage.setItem(key+'_'+id,value)
-   }
-  }
+  if(accounts.some(account=>account.normalizedName===normalizedName)){loginMessage('Nama pengguna ini sudah terdaftar di perangkat. Kembali ke layar masuk untuk menggunakan akun tersebut, atau pilih nama pengguna lain.',true);return}
+  const id=randomHex(16),salt=randomHex(),hasLegacyAccount=accounts.length===0&&localStorage.getItem('lkh_v1')!==null;
+  const account={id,username,normalizedName,salt,passwordHash:await passwordDigest(password,salt),storageKey:hasLegacyAccount?'lkh_v1':'lkh_user_'+id,useLegacyMinutes:accounts.length===0,photo:pendingProfilePhoto};
   accounts.push(account);localStorage.setItem(ACCOUNTS_KEY,JSON.stringify(accounts));
-  if(accounts.length===1)localStorage.removeItem('lkh_v1');
   loginMessage('Akun berhasil dibuat. Membuka aplikasi…');await openAccount(account)
- }catch(error){console.error('Akun lokal tidak dapat dibuat:',error);loginMessage('Akun gagal dibuat. Periksa ruang penyimpanan dan dukungan browser.',true)}
+ }catch(error){console.error('Akun lokal tidak dapat dibuat:',error);const quota=error&&/quota|storage full/i.test(error.name+' '+error.message);loginMessage(quota?'Penyimpanan browser penuh. Data kegiatan lama tetap aman dan tidak dihapus. Kosongkan ruang lalu coba lagi, atau daftar tanpa foto.':'Akun gagal dibuat: '+(error&&error.message||'Terjadi kesalahan. Data lama tidak diubah.'),true)}
  finally{$('registerButton').disabled=$('loginButton').disabled=false}
 }
 async function loginAccount(){
@@ -427,7 +419,12 @@ async function loginAccount(){
 }
 async function openAccount(account){
  let userData={docs:[],logo:null};
- const raw=localStorage.getItem(account.storageKey);if(raw)userData=Object.assign(userData,JSON.parse(raw));
+ let raw=localStorage.getItem(account.storageKey);
+ if(!raw&&readAccounts().length===1&&localStorage.getItem('lkh_v1')!==null){
+  account.storageKey='lkh_v1';account.useLegacyMinutes=true;raw=localStorage.getItem('lkh_v1');
+  try{localStorage.setItem(ACCOUNTS_KEY,JSON.stringify(readAccounts().map(item=>item.id===account.id?account:item)))}catch(error){console.error('Referensi data lama belum dapat diperbarui; data lama tetap digunakan:',error)}
+ }
+ if(raw)userData=Object.assign(userData,JSON.parse(raw));
  if(!Array.isArray(userData.docs))throw new Error('Data akun rusak atau formatnya tidak valid.');
  activeAccount=account;S=userData;S.docs=S.docs.map(normalizeDoc);
  if(S.logoSource!=='custom')S.logo=null;
