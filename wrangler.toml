@@ -1,0 +1,16 @@
+name = "notulen-ai-summary"
+main = "worker.js"
+compatibility_date = "2026-10-04"
+workers_dev = true
+
+[vars]
+ALLOWED_ORIGIN = "https://apponline123.github.io"
+
+[[ratelimits]]
+name = "AI_RATE_LIMIT"
+# Replace with a positive integer unique to this Cloudflare account.
+namespace_id = "482731"
+
+  [ratelimits.simple]
+  limit = 10
+  period = 60
