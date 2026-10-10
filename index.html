@@ -29,6 +29,10 @@ main{max-width:1200px;margin:auto;padding:0 12px 24px}
 [hidden]{display:none!important}
 @media(max-width:700px){.grid{grid-template-columns:1fr}.dash-shell{grid-template-columns:1fr}}
 label{display:block;font-size:12px;font-weight:600;color:var(--mu);margin:8px 0 3px}
+.password-field{position:relative;display:flex;align-items:center}
+.password-field input{padding-right:42px}
+.password-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--pr);font-size:17px;line-height:1;cursor:pointer;padding:6px 5px;border-radius:999px;min-width:26px;height:26px;display:grid;place-items:center}
+.password-toggle:hover{background:rgba(23,59,94,.08)}
 input,textarea{width:100%;padding:9px 10px;border:1px solid var(--bd);border-radius:8px;background:#fbfdfe;color:var(--tx);font:inherit;font-size:15px}
 select{width:100%;padding:11px 12px;border:1px solid var(--bd);border-radius:9px;background:#fbfdfe;color:var(--tx);font:inherit;font-size:15px}
 input:focus,textarea:focus{outline:2px solid #168b8340;border-color:var(--pr2)}
@@ -56,6 +60,7 @@ body{background:linear-gradient(180deg,#eaf0f5 0,#f5f7f9 300px,var(--bg) 100%)}
 header{background:linear-gradient(110deg,#173b5e,#214d6b);padding:16px max(18px,calc((100vw - 1160px)/2));gap:14px;border-bottom-color:var(--ac);box-shadow:0 5px 18px #18324718}
 header h1{font-size:20px;letter-spacing:.15px}
 header small{display:block;opacity:.9;margin-top:3px}
+.header-copy{margin-top:10px;color:rgba(255,255,255,.8);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
 #st{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);padding:6px 12px}
 nav{gap:8px;padding-top:18px;max-width:1080px}
 nav button{padding:13px;border-radius:12px 12px 0 0;font-weight:650;transition:background .18s,color .18s}
@@ -268,7 +273,7 @@ input[type=file]{background:#f8fbfc}
 }
 @media(max-width:700px){#appShell:not([hidden]){padding:6px 10px 22px}#appShell .tab{padding-bottom:22px}#appShell .dash-hero{padding:18px;border-radius:15px}#appShell .profile-card{min-height:106px;padding:14px 12px}#appShell .profile-card .value{font-size:23px;margin-top:9px}#appShell .chart-card{padding:16px 13px}}
 </style></head><body>
-<header><img id="hl" alt=""><div><h1>Bukti Dukung SKP</h1><small>Dinas Perumahan Rakyat dan Kawasan Permukiman</small></div><div id="st">Siap</div></header>
+<header><img id="hl" alt=""><div><h1>Bukti Dukung SKP</h1><small>Dinas Perumahan Rakyat dan Kawasan Permukiman</small><div class="header-copy">© Copyright by Bayu Permana · bid.kp@mjm</div></div><div id="st">Siap</div></header>
 <section class="login-wrap" id="loginPanel">
 <div class="login-layout">
 <div class="login-welcome">
@@ -281,7 +286,11 @@ input[type=file]{background:#f8fbfc}
 <h2 class="login-heading" id="loginHeading">Selamat datang</h2>
 <p class="login-intro" id="loginIntro">Masuk dengan akun Anda atau buat akun baru untuk mulai mencatat kegiatan.</p>
 <label for="loginName">Nama pengguna</label><input id="loginName" autocomplete="username" maxlength="32" placeholder="Minimal 3 karakter">
-<label for="loginPassword">Kata sandi</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Minimal 8 karakter">
+<label for="loginPassword">Kata sandi</label>
+<div class="password-field">
+  <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Minimal 8 karakter">
+  <button class="password-toggle" id="loginPasswordToggle" type="button" aria-label="Lihat kata sandi">👁</button>
+</div>
 <div class="register-photo" id="registerPhotoPanel" hidden>
 <div class="register-photo-preview" id="registerPhotoPreview" aria-hidden="true"><img id="registerPhotoImage" alt="" hidden><span id="registerPhotoFallback">👤</span></div>
 <div class="register-photo-copy"><strong>Foto profil</strong><small>Opsional · JPG, PNG, atau foto dari kamera</small><button class="btn g" id="chooseProfilePhoto" type="button">Pilih foto</button></div>
@@ -325,9 +334,27 @@ input[type=file]{background:#f8fbfc}
 <input type="file" id="editProfilePhotoInput" accept="image/*" capture="user" hidden>
 <h3>Ganti kata sandi (opsional)</h3>
 <div class="grid">
-<div><label for="profileCurrentPassword">Kata sandi saat ini</label><input id="profileCurrentPassword" type="password" autocomplete="current-password"></div>
-<div><label for="profileNewPassword">Kata sandi baru</label><input id="profileNewPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Minimal 8 karakter"></div>
-<div><label for="profileConfirmPassword">Ulangi kata sandi baru</label><input id="profileConfirmPassword" type="password" minlength="8" autocomplete="new-password"></div>
+<div>
+  <label for="profileCurrentPassword">Kata sandi saat ini</label>
+  <div class="password-field">
+    <input id="profileCurrentPassword" type="password" autocomplete="current-password">
+    <button class="password-toggle" id="profileCurrentPasswordToggle" type="button" aria-label="Lihat kata sandi">👁</button>
+  </div>
+</div>
+<div>
+  <label for="profileNewPassword">Kata sandi baru</label>
+  <div class="password-field">
+    <input id="profileNewPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Minimal 8 karakter">
+    <button class="password-toggle" id="profileNewPasswordToggle" type="button" aria-label="Lihat kata sandi">👁</button>
+  </div>
+</div>
+<div>
+  <label for="profileConfirmPassword">Ulangi kata sandi baru</label>
+  <div class="password-field">
+    <input id="profileConfirmPassword" type="password" minlength="8" autocomplete="new-password">
+    <button class="password-toggle" id="profileConfirmPasswordToggle" type="button" aria-label="Lihat kata sandi">👁</button>
+  </div>
+</div>
 </div>
 <div class="row"><button class="btn" type="button" id="saveProfile">Simpan perubahan profil</button></div>
 <small class="profile-edit-status" id="profileEditStatus" role="status" aria-live="polite"></small>
@@ -478,6 +505,22 @@ function minutesKey(key){return activeAccount&&!activeAccount.useLegacyMinutes?k
 function readAccounts(){const raw=localStorage.getItem(ACCOUNTS_KEY);if(!raw)return[];const parsed=JSON.parse(raw);if(!Array.isArray(parsed))throw new Error('Daftar akun lokal tidak valid.');return parsed}
 function loginMessage(message,isError=false){$('loginStatus').textContent=message;$('loginStatus').style.color=isError?'#b42318':'var(--mu)'}
 function profileMessage(message,isError=false){$('profileEditStatus').textContent=message;$('profileEditStatus').style.color=isError?'#b42318':'var(--mu)'}
+function bindPasswordToggle(inputId,buttonId){
+ const input=$(inputId),toggle=$(buttonId);
+ if(!input||!toggle)return;
+ const syncState=()=>{
+  const isVisible=input.type==='text';
+  toggle.textContent=isVisible?'🙈':'👁';
+  toggle.setAttribute('aria-label',isVisible?'Sembunyikan kata sandi':'Lihat kata sandi');
+ };
+ toggle.addEventListener('click',()=>{
+  const nextType=input.type==='password'?'text':'password';
+  input.type=nextType;
+  syncState();
+  input.focus();
+ });
+ syncState();
+}
 function cloudApiUrl(){return ''}
 async function cloudRequest(path,{method='GET',body,token=cloudToken}={}){
  const base=cloudApiUrl();if(!base)throw new Error('Cloud dinonaktifkan. Gunakan akun lokal di perangkat ini saja.');
@@ -1030,7 +1073,7 @@ try{localStorage.removeItem(CLOUD_API_KEY);localStorage.removeItem('notulen_ai_w
 $('loginNoteText').textContent='Akun lokal tersimpan di perangkat ini. Data hanya dipakai di browser ini dan tidak menggunakan cloud.';
 F.forEach(k=>{$(k).addEventListener('input',auto);if(k==='termin')$(k).addEventListener('change',auto)});$('q').oninput=list;$('filterTermin').onchange=list;window.addEventListener('resize',fit);
 MINUTES_FIELDS.forEach(id=>$(id).addEventListener('input',()=>{if(activeAccount){saveMinutesDraft();minutesPreview()}}));$('mDownload').onclick=downloadMinutes;$('mVoiceStart').onclick=startMinutesDictation;$('mVoiceStop').onclick=stopMinutesDictation;$('mAiSave').onclick=saveMinutesAiEndpoint;$('mAiSummarize').onclick=summarizeMinutesWithAi;$('mAiAppend').onclick=()=>applyMinutesAiSummary(false);$('mAiReplace').onclick=()=>applyMinutesAiSummary(true);$('mHistorySave').onclick=saveMinutesToHistory;$('mNew').onclick=()=>startNewMinutes();$('mHistorySearch').addEventListener('input',renderMinutesHistory);$('mHistoryList').addEventListener('click',handleMinutesHistoryClick);
-$('loginButton').onclick=loginAccount;$('registerButton').onclick=registerAccount;$('cancelRegisterButton').onclick=cancelRegistration;$('chooseProfilePhoto').onclick=()=>$('profilePhotoInput').click();$('profilePhotoInput').onchange=event=>chooseProfilePhoto(event.target.files[0]);$('loginPassword').addEventListener('keydown',event=>{if(event.key==='Enter'){if(registerMode)registerAccount();else loginAccount()}});$('loginName').addEventListener('keydown',event=>{if(event.key==='Enter')$('loginPassword').focus()});$('dashLogout').onclick=logoutAccount;$('dashEditor').onclick=()=>tab('ed');$('dashHistory').onclick=()=>tab('hi');
+$('loginButton').onclick=loginAccount;$('registerButton').onclick=registerAccount;$('cancelRegisterButton').onclick=cancelRegistration;$('chooseProfilePhoto').onclick=()=>$('profilePhotoInput').click();$('profilePhotoInput').onchange=event=>chooseProfilePhoto(event.target.files[0]);$('loginPassword').addEventListener('keydown',event=>{if(event.key==='Enter'){if(registerMode)registerAccount();else loginAccount()}});$('loginName').addEventListener('keydown',event=>{if(event.key==='Enter')$('loginPassword').focus()});bindPasswordToggle('loginPassword','loginPasswordToggle');bindPasswordToggle('profileCurrentPassword','profileCurrentPasswordToggle');bindPasswordToggle('profileNewPassword','profileNewPasswordToggle');bindPasswordToggle('profileConfirmPassword','profileConfirmPasswordToggle');$('dashLogout').onclick=logoutAccount;$('dashEditor').onclick=()=>tab('ed');$('dashHistory').onclick=()=>tab('hi');
 $('editProfilePhoto').onclick=()=>$('editProfilePhotoInput').click();$('editProfilePhotoInput').onchange=event=>chooseEditProfilePhoto(event.target.files[0]);$('removeProfilePhoto').onclick=()=>{profilePhotoDraft='';renderDashboard();profileMessage('Foto akan dihapus setelah Simpan perubahan ditekan.')};$('saveProfile').onclick=saveProfile;
 $('fo').onchange=async e=>{for(const f of e.target.files)cur.foto.push(await resize(f,1000,'image/jpeg'));e.target.value='';thumbs();auto()};
 $('th').onclick=e=>{const i=e.target.dataset.i;if(i!=null){cur.foto.splice(i,1);thumbs();auto()}};
