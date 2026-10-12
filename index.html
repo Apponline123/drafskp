@@ -528,8 +528,10 @@ function normalizeDoc(d){return TERMS.includes(d.termin)?d:{...d,termin:'III'}}
 function docYear(doc){const value=String(doc.tgl||'');if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return'';const[year,month,day]=value.split('-').map(Number),date=new Date(Date.UTC(year,month-1,day));return date.getUTCFullYear()===year&&date.getUTCMonth()===month-1&&date.getUTCDate()===day?String(year):''}
 function yearDocs(){return S.docs.filter(doc=>docYear(doc)===selectedYear)}
 function updateYearFilters(){
- const currentYear=String(new Date().getFullYear()),years=[...new Set([...S.docs.map(docYear).filter(Boolean),currentYear])].sort((a,b)=>Number(b)-Number(a)),hasUndated=S.docs.some(doc=>!docYear(doc));
- if(!years.includes(selectedYear)&&!(selectedYear===''&&hasUndated))selectedYear=currentYear;
+ const currentYear=new Date().getFullYear(),storedYears=S.docs.map(docYear).filter(Boolean).map(Number),minYear=Math.min(currentYear-10,...storedYears),maxYear=Math.max(currentYear+10,...storedYears),years=[];
+ for(let year=maxYear;year>=minYear;year--)years.push(String(year));
+ const hasUndated=S.docs.some(doc=>!docYear(doc));
+ if(!years.includes(selectedYear)&&!(selectedYear===''&&hasUndated))selectedYear=String(currentYear);
  const options=years.map(year=>`<option value="${year}">${year}</option>`);if(hasUndated)options.push('<option value="">Tanggal belum diisi</option>');
  ['dashYear','historyYear'].forEach(id=>{const select=$(id);select.innerHTML=options.join('');select.value=selectedYear})
 }
