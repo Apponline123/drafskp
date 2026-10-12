@@ -317,6 +317,14 @@ header .header-copy{display:none}
 .certificate-info small{margin-top:4px;color:var(--mu);font-size:12px}
 .certificate-actions{display:flex;gap:7px}
 .certificate-actions .btn{padding:8px 11px;font-size:12px}
+.certificate-viewer{width:min(900px,calc(100% - 24px));max-width:none;height:min(85dvh,850px);padding:0;border:0;border-radius:14px;background:#fff;box-shadow:0 18px 60px #102a3a40}
+.certificate-viewer::backdrop{background:#102a3acc}
+.certificate-viewer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--bd)}
+.certificate-viewer-head strong{overflow:hidden;color:var(--tx);text-overflow:ellipsis;white-space:nowrap}
+.certificate-viewer-head button{flex:0 0 auto}
+.certificate-viewer-content{display:grid;height:calc(100% - 58px);place-items:center;overflow:auto;background:#eef2f5}
+.certificate-viewer-content img{display:block;max-width:100%;max-height:100%;object-fit:contain}
+.certificate-viewer-content iframe{width:100%;height:100%;border:0;background:#fff}
 @media(max-width:600px){.certificates-head{align-items:flex-start}.certificate-item{align-items:flex-start;flex-wrap:wrap}.certificate-actions{width:100%;padding-left:52px}.certificate-actions .btn{flex:1}.certificate-tools input{width:100%;margin-left:0}}
 #appShell .dash-hero:after{display:none}
 #appShell .dash-hero>*{z-index:auto}
@@ -513,6 +521,10 @@ header .header-copy{display:none}
 </div>
 <div class="history-tools certificate-tools"><label for="certificateSearch">Cari sertifikat</label><input id="certificateSearch" placeholder="Cari nama sertifikat..."><span id="certificateYearLabel"></span></div>
 <div id="certificateList" class="certificate-list"></div>
+<dialog id="certificateViewer" class="certificate-viewer" aria-labelledby="certificateViewerTitle">
+<div class="certificate-viewer-head"><strong id="certificateViewerTitle"></strong><button class="btn" type="button" id="closeCertificateViewer">Tutup</button></div>
+<div class="certificate-viewer-content" id="certificateViewerContent"></div>
+</dialog>
 </section>
 <section id="minutes" class="tab">
 <div class="grid">
@@ -637,7 +649,32 @@ function renderCertificateList(){
  const visible=certificates.filter(certificate=>(certificate.name+' '+certificate.fileName).toLocaleLowerCase('id-ID').includes(query));
  $('certificateCount').textContent=certificates.length+' sertifikat';
  $('certificateYearLabel').textContent=certificates.length+' arsip · '+selectedYear;
- $('certificateList').innerHTML=visible.length?visible.map(certificate=>`<article class="certificate-item"><span class="certificate-file-icon" aria-hidden="true">${certificate.mime==='application/pdf'?'PDF':'IMG'}</span><div class="certificate-info"><strong>${esc(certificate.name)}</strong><small>${fmtTgl(certificate.tgl)} · ${esc(certificate.fileName)} · ${(certificate.size/1024/1024).toFixed(2)} MB</small></div><div class="certificate-actions"><button class="btn" type="button" data-certificate-action="download" data-certificate-id="${esc(certificate.id)}">Unduh ulang</button><button class="btn r" type="button" data-certificate-action="delete" data-certificate-id="${esc(certificate.id)}">Hapus</button></div></article>`).join(''):'<p style="color:var(--mu)">'+(certificates.length?'Tidak ada sertifikat yang cocok dengan pencarian.':'Belum ada sertifikat pada tahun '+(selectedYear||'yang dipilih')+'.')+'</p>'
+ $('certificateList').innerHTML=visible.length?visible.map(certificate=>`<article class="certificate-item"><span class="certificate-file-icon" aria-hidden="true">${certificate.mime==='application/pdf'?'PDF':'IMG'}</span><div class="certificate-info"><strong>${esc(certificate.name)}</strong><small>${fmtTgl(certificate.tgl)} · ${esc(certificate.fileName)} · ${(certificate.size/1024/1024).toFixed(2)} MB</small></div><div class="certificate-actions"><button class="btn" type="button" data-certificate-action="view" data-certificate-id="${esc(certificate.id)}">Lihat</button><button class="btn" type="button" data-certificate-action="download" data-certificate-id="${esc(certificate.id)}">Unduh ulang</button><button class="btn r" type="button" data-certificate-action="delete" data-certificate-id="${esc(certificate.id)}">Hapus</button></div></article>`).join(''):'<p style="color:var(--mu)">'+(certificates.length?'Tidak ada sertifikat yang cocok dengan pencarian.':'Belum ada sertifikat pada tahun '+(selectedYear||'yang dipilih')+'.')+'</p>'
+}
+let certificatePreviewUrl='';
+function clearCertificatePreview(){
+ if(certificatePreviewUrl){URL.revokeObjectURL(certificatePreviewUrl);certificatePreviewUrl=''}
+ $('certificateViewerContent').replaceChildren()
+}
+function closeCertificatePreview(){
+ const viewer=$('certificateViewer');
+ if(viewer.open)viewer.close();
+ clearCertificatePreview()
+}
+async function viewCertificate(certificate){
+ try{
+  const blob=await readCertificateFile(certificate.id);
+  if(!blob)throw new Error('File tidak ditemukan di penyimpanan perangkat. Impor kembali dari file cadangan jika tersedia.');
+  clearCertificatePreview();certificatePreviewUrl=URL.createObjectURL(blob);
+  $('certificateViewerTitle').textContent=certificate.name;
+  const content=$('certificateViewerContent');
+  if(certificate.mime==='application/pdf'){
+   const frame=document.createElement('iframe');frame.title='Pratinjau '+certificate.name;frame.src=certificatePreviewUrl;content.append(frame)
+  }else{
+   const image=document.createElement('img');image.alt='Pratinjau '+certificate.name;image.src=certificatePreviewUrl;content.append(image)
+  }
+  $('certificateViewer').showModal()
+ }catch(error){console.error('Sertifikat gagal ditampilkan:',error);certificateMessage('Sertifikat gagal ditampilkan: '+(error.message||error),true)}
 }
 async function saveCertificate(){
  const file=$('certificateFile').files[0],name=$('certificateName').value.trim(),date=$('certificateDate').value;
@@ -659,6 +696,7 @@ async function saveCertificate(){
 async function handleCertificateAction(event){
  const button=event.target.closest('button[data-certificate-action]');if(!button)return;
  const id=button.dataset.certificateId,certificate=(S.certificates||[]).find(item=>item.id===id);if(!certificate)return;
+ if(button.dataset.certificateAction==='view'){await viewCertificate(certificate);return}
  if(button.dataset.certificateAction==='download'){
   try{const blob=await readCertificateFile(id);if(!blob)throw new Error('File tidak ditemukan di penyimpanan perangkat. Impor kembali dari file cadangan jika tersedia.');await out(certificateFileName(certificate.name)+'.'+(certificate.mime==='application/pdf'?'pdf':certificate.mime==='image/png'?'png':'jpg'),blob)}
   catch(error){console.error('Sertifikat gagal diunduh:',error);certificateMessage('Sertifikat gagal diunduh: '+(error.message||error),true)}
@@ -1278,7 +1316,7 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>tab(b.dataset.t
 try{localStorage.removeItem(CLOUD_API_KEY);localStorage.removeItem('notulen_ai_worker_endpoint_v1');}catch(error){console.error('Tidak dapat menonaktifkan cloud pada browser ini:',error)}
 if($('loginNoteText')){$('loginNoteText').textContent='Akun lokal tersimpan di perangkat ini. Data hanya dipakai di browser ini dan tidak menggunakan cloud.'}
 F.forEach(k=>{$(k).addEventListener('input',auto);if(k==='termin')$(k).addEventListener('change',auto)});$('q').oninput=list;$('filterTermin').onchange=list;$('dashYear').onchange=e=>selectYear(e.target.value);$('historyYear').onchange=e=>selectYear(e.target.value);window.addEventListener('resize',fit);
- $('certificateDate').value=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);$('saveCertificate').onclick=saveCertificate;$('certificateSearch').oninput=renderCertificateList;$('certificateList').onclick=handleCertificateAction;
+ $('certificateDate').value=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);$('saveCertificate').onclick=saveCertificate;$('certificateSearch').oninput=renderCertificateList;$('certificateList').onclick=handleCertificateAction;$('closeCertificateViewer').onclick=closeCertificatePreview;$('certificateViewer').addEventListener('cancel',clearCertificatePreview);
 MINUTES_FIELDS.forEach(id=>$(id).addEventListener('input',()=>{if(activeAccount){saveMinutesDraft();minutesPreview()}}));$('mDownload').onclick=downloadMinutes;$('mVoiceStart').onclick=startMinutesDictation;$('mVoiceStop').onclick=stopMinutesDictation;$('mAiSave').onclick=saveMinutesAiEndpoint;$('mAiSummarize').onclick=summarizeMinutesWithAi;$('mAiAppend').onclick=()=>applyMinutesAiSummary(false);$('mAiReplace').onclick=()=>applyMinutesAiSummary(true);$('mHistorySave').onclick=saveMinutesToHistory;$('mNew').onclick=()=>startNewMinutes();$('mHistorySearch').addEventListener('input',renderMinutesHistory);$('mHistoryList').addEventListener('click',handleMinutesHistoryClick);
 $('loginButton').onclick=loginAccount;$('registerButton').onclick=registerAccount;$('cancelRegisterButton').onclick=cancelRegistration;$('chooseProfilePhoto').onclick=()=>$('profilePhotoInput').click();$('profilePhotoInput').onchange=event=>chooseProfilePhoto(event.target.files[0]);$('loginPassword').addEventListener('keydown',event=>{if(event.key==='Enter'){if(registerMode)registerAccount();else loginAccount()}});$('loginName').addEventListener('keydown',event=>{if(event.key==='Enter')$('loginPassword').focus()});bindPasswordToggle('loginPassword','loginPasswordToggle');bindPasswordToggle('profileCurrentPassword','profileCurrentPasswordToggle');bindPasswordToggle('profileNewPassword','profileNewPasswordToggle');bindPasswordToggle('profileConfirmPassword','profileConfirmPasswordToggle');$('dashLogout').onclick=logoutAccount;$('dashEditor').onclick=()=>tab('ed');$('dashHistory').onclick=()=>tab('hi');
 $('editProfilePhoto').onclick=()=>$('editProfilePhotoInput').click();$('editProfilePhotoInput').onchange=event=>chooseEditProfilePhoto(event.target.files[0]);$('removeProfilePhoto').onclick=()=>{profilePhotoDraft='';renderDashboard();profileMessage('Foto akan dihapus setelah Simpan perubahan ditekan.')};$('saveProfile').onclick=saveProfile;
