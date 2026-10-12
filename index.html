@@ -279,7 +279,7 @@ header{min-height:68px;padding:10px max(18px,calc((100vw - 1480px)/2));gap:12px;
 header img{width:42px;height:42px;flex-basis:42px;padding:0;border-radius:0;background:transparent}
 header h1{color:#193b5a;font-size:18px;font-weight:750}
 header small{color:#637587;font-size:11px}
-header .header-copy{display:none}
+header .header-copy{display:block;margin-top:4px;color:rgba(26,56,75,.82);font-size:11px;letter-spacing:.06em;text-transform:none;font-weight:600}header .header-copy a{color:inherit;text-decoration:none}
 #st{border:1px solid #dce9e6;background:#f1f7f5;color:#287263;font-weight:650}
 #appShell:not([hidden]){grid-template-columns:228px minmax(0,1fr);gap:22px;max-width:1600px;padding:22px clamp(18px,2.6vw,38px)}
 #appShell>.app-nav{top:18px;min-height:calc(100vh - 108px);padding:14px 12px;border:1px solid #e4e9ed;border-radius:12px;background:#fff;box-shadow:0 3px 14px #1936500b}
@@ -352,8 +352,234 @@ header .header-copy{display:none}
  #appShell>.app-nav button.on .nav-icon{background:#fff0dc}
 }
 @media(max-width:700px){header{padding:10px 12px}header img{width:38px;height:38px;flex-basis:38px}header h1{font-size:16px}header small{font-size:10px}#st{font-size:10px}}
+
+  /* Visual refresh: stronger hierarchy + cleaner modern feel */
+  :root {
+    --shadow-soft: 0 22px 38px rgba(18, 52, 72, 0.12);
+    --shadow-card: 0 10px 24px rgba(18, 52, 72, 0.08);
+    --surface-soft: #f7fafc;
+    --surface-strong: #eef7f6;
+    --brand-ink: #173b5e;
+    --brand-accent: #e99a37;
+    --brand-success: #1f8b79;
+  }
+
+  body {
+    background: linear-gradient(180deg, #edf3f8 0%, #f5f8fb 22%, #f4f9f7 100%);
+  }
+
+  header {
+    background: linear-gradient(135deg, #f8fafc 0%, #eff7fa 100%);
+    color: var(--brand-ink);
+    border-bottom: 1px solid #dfe9ef;
+    box-shadow: 0 10px 24px rgba(18, 52, 72, 0.06);
+  }
+
+  header h1,
+  header small {
+    color: var(--brand-ink);
+  }
+
+  #st {
+    background: linear-gradient(135deg, #ebf9f5, #dff0f0);
+    color: var(--brand-success);
+    border: 1px solid rgba(31, 139, 121, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+  }
+
+  .login-wrap {
+    max-width: 1120px;
+    min-height: calc(100vh - 90px);
+    padding: 28px 16px 42px;
+  }
+
+  .login-layout {
+    border-radius: 30px;
+    border: 1px solid rgba(17, 86, 109, 0.10);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+  }
+
+  .login-welcome {
+    background: radial-gradient(circle at 82% 18%, rgba(141, 229, 198, 0.42), transparent 26%),
+                linear-gradient(135deg, #0d466e 0%, #0d6882 48%, #13907d 100%);
+    box-shadow: inset -1px 0 0 rgba(255,255,255,0.08);
+  }
+
+  .login-welcome h2 {
+    font-size: clamp(30px, 2.1vw, 42px);
+    letter-spacing: -0.04em;
+    text-shadow: 0 10px 26px rgba(10, 27, 36, 0.18);
+  }
+
+  .login-card {
+    background: linear-gradient(180deg, #ffffff, #f8fbfc);
+    border-left: 1px solid rgba(17, 86, 109, 0.08);
+    padding: 42px 34px;
+  }
+
+  .login-heading {
+    font-size: clamp(24px, 1.7vw, 30px);
+    letter-spacing: -0.04em;
+  }
+
+  .login-intro {
+    color: #5f7183;
+    line-height: 1.6;
+  }
+
+  .login-card input,
+  .login-card select,
+  .login-card textarea,
+  input,
+  select,
+  textarea {
+    border: 1px solid #d9e3eb;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #ffffff, #fbfdff);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  }
+
+  .login-card input:focus,
+  .login-card select:focus,
+  .login-card textarea:focus,
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: rgba(35, 138, 124, 0.7);
+    box-shadow: 0 0 0 4px rgba(32, 138, 124, 0.12);
+  }
+
+  .btn {
+    position: relative;
+    overflow: hidden;
+    border: 0;
+    border-radius: 12px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    filter: saturate(1.04);
+    box-shadow: 0 10px 20px rgba(20, 88, 116, 0.18);
+  }
+
+  .btn:active {
+    transform: translateY(0);
+  }
+
+  .btn.g {
+    background: linear-gradient(135deg, #edf6f5, #dceef0);
+    color: var(--brand-ink);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+  }
+
+  .btn.r {
+    background: linear-gradient(135deg, #e84c5b, #c02944);
+  }
+
+  .btn.o {
+    background: linear-gradient(135deg, #1fa28b, #157e71);
+  }
+
+  .btn.w {
+    background: linear-gradient(135deg, #2f79b8, #234e86);
+  }
+
+  .tab,
+  .card,
+  .profile-card,
+  .chart-card,
+  .certificate-item,
+  .minutes-history-item,
+  .profile-edit {
+    box-shadow: var(--shadow-card);
+  }
+
+  .profile-card {
+    border-radius: 16px;
+    border: 1px solid #e4edf2;
+    background: linear-gradient(180deg, #ffffff, #f7fbfd);
+  }
+
+  .profile-card .value {
+    color: var(--brand-ink);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+  }
+
+  .chart-card {
+    border-radius: 16px;
+    border: 1px solid #e5edf1;
+    background: linear-gradient(180deg, #ffffff, #fbfdfe);
+  }
+
+  .dash-hero {
+    background: linear-gradient(135deg, #0e446d 0%, #0d627d 40%, #127d77 100%);
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 16px 32px rgba(15, 70, 94, 0.18);
+  }
+
+  .dash-hero h2,
+  .dash-hero p,
+  .dash-eyebrow {
+    text-shadow: 0 8px 18px rgba(0,0,0,0.10);
+  }
+
+  .app-nav button {
+    border-radius: 12px;
+    border: 1px solid transparent;
+    transition: all 0.18s ease;
+  }
+
+  .app-nav button.on {
+    background: linear-gradient(135deg, #fffdf8, #fff4e7);
+    border-color: rgba(233, 154, 55, 0.32);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+  }
+
+  .app-nav .nav-icon {
+    background: linear-gradient(180deg, #f4f9fb, #edf4f8);
+    border: 1px solid rgba(27, 62, 93, 0.06);
+  }
+
+  .certificate-item,
+  .minutes-history-item {
+    border-radius: 12px;
+    border: 1px solid #e3ebf1;
+    background: linear-gradient(180deg, #ffffff, #f9fbfc);
+  }
+
+  #appShell>.app-nav {
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(10px);
+  }
+
+  .profile-edit {
+    border: 1px solid #e5ecf1;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #ffffff, #fafcfd);
+  }
+
+  @media (max-width: 820px) {
+    .login-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .login-welcome {
+      min-height: 260px;
+    }
+
+    .login-card {
+      padding: 28px 20px 30px;
+    }
+  }
 </style></head><body>
-<header><img id="hl" alt=""><div><h1>Bukti Dukung SKP</h1><small>Dinas Perumahan Rakyat dan Kawasan Permukiman</small><div class="header-copy">© Copyright by Bayu Permana · bid.kp@mjm</div></div><div id="st">Siap</div></header>
+<header><img id="hl" alt=""><div><h1>Bukti Dukung SKP</h1><small>Dinas Perumahan Rakyat dan Kawasan Permukiman</small><div class="header-copy">© Copyright by Bayu Permana · <a href="mailto:permana.kp.mjm@gmail.com" style="color:inherit;text-decoration:none;">permana.kp.mjm@gmail.com</a></div></div><div id="st">Siap</div></header>
 <section class="login-wrap" id="loginPanel">
 <div class="login-layout">
 <div class="login-welcome">
@@ -1329,7 +1555,7 @@ $('mergepdf').onclick=()=>{const docs=selectedDocs();if(docs)pdf(docs)};
 $('mergeword').onclick=()=>{const docs=selectedDocs();if(docs)word(docs)};
 $('finalpdf').onclick=()=>{const docs=finalDocs();if(docs)pdf(docs,'final')};
 $('finalword').onclick=()=>{const docs=finalDocs();if(docs)word(docs,'final')};
-$('backupout').onclick=async()=>{try{const stamp=new Date().toISOString().slice(0,10),certificateFiles=await certificateBackupData();await out('cadangan-skp-'+stamp+'.json',new Blob([JSON.stringify({version:2,exportedAt:new Date().toISOString(),docs:S.docs,certificates:S.certificates||[],certificateFiles,deletedIds:S.deletedIds||[],logo:S.logoSource==='custom'?S.logo:null,logoSource:S.logoSource==='custom'?'custom':null},null,2)],{type:'application/json'}))}catch(error){console.error('Cadangan sertifikat gagal dibuat:',error);alert('Cadangan gagal dibuat: '+(error.message||error))}};
+$('backupout').onclick=async()=>{try{const stamp=new Date().toISOString().slice(0,10),certificateFiles=await certificateBackupData();const accountPhoto=activeAccount&&typeof activeAccount.photo==='string'?activeAccount.photo:'';await out('cadangan-skp-'+stamp+'.json',new Blob([JSON.stringify({version:3,exportedAt:new Date().toISOString(),docs:S.docs,certificates:S.certificates||[],certificateFiles,deletedIds:S.deletedIds||[],logo:S.logoSource==='custom'?S.logo:null,logoSource:S.logoSource==='custom'?'custom':null,accountPhoto},null,2)],{type:'application/json'}))}catch(error){console.error('Cadangan sertifikat gagal dibuat:',error);alert('Cadangan gagal dibuat: '+(error.message||error))}};
 $('backupin').onclick=()=>$('backupfile').click();
 $('backupfile').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;
  try{const backup=JSON.parse(await file.text());if(!backup||!Array.isArray(backup.docs)||backup.docs.some(d=>!d||typeof d!=='object'||typeof d.id!=='string'||!d.id))throw new Error('Format file cadangan tidak valid');
@@ -1339,8 +1565,12 @@ $('backupfile').onchange=async e=>{const file=e.target.files[0];e.target.value='
   if(certificateBlobs.length)await storeCertificateFiles(certificateBlobs);
   const merged=new Map(S.docs.map(d=>[d.id,d]));let added=0,updated=0;
   for(const entry of backup.docs){const d=normalizeDoc(entry),old=merged.get(d.id);if(!old){merged.set(d.id,d);added++}else if((d.upd||0)>(old.upd||0)){merged.set(d.id,d);updated++}}
-  const previous=S.docs,previousCertificates=S.certificates||[],previousDeletedIds=S.deletedIds,previousLogo=S.logo,previousLogoSource=S.logoSource;S.docs=[...merged.values()];S.certificates=[...previousCertificates,...certificatesToAdd];S.deletedIds=(S.deletedIds||[]).filter(id=>!backup.docs.some(doc=>doc.id===id));if(Array.isArray(backup.deletedIds))S.deletedIds=[...new Set([...S.deletedIds,...backup.deletedIds.filter(id=>typeof id==='string')])];if(backup.logoSource==='custom'&&typeof backup.logo==='string'&&S.logoSource!=='custom'){S.logo=backup.logo;S.logoSource='custom';$('hl').src=logo()}
-  if(!persist()){S.docs=previous;S.certificates=previousCertificates;S.deletedIds=previousDeletedIds;S.logo=previousLogo;S.logoSource=previousLogoSource;$('hl').src=logo();if(certificateBlobs.length)await removeCertificateFiles(certificateBlobs.map(item=>item.id));render();return}
+  const previous=S.docs,previousCertificates=S.certificates||[],previousDeletedIds=S.deletedIds,previousLogo=S.logo,previousLogoSource=S.logoSource,previousAccountPhoto=activeAccount&&typeof activeAccount.photo==='string'?activeAccount.photo:'';S.docs=[...merged.values()];S.certificates=[...previousCertificates,...certificatesToAdd];S.deletedIds=(S.deletedIds||[]).filter(id=>!backup.docs.some(doc=>doc.id===id));if(Array.isArray(backup.deletedIds))S.deletedIds=[...new Set([...S.deletedIds,...backup.deletedIds.filter(id=>typeof id==='string')])];if(backup.logoSource==='custom'&&typeof backup.logo==='string'&&S.logoSource!=='custom'){S.logo=backup.logo;S.logoSource='custom';$('hl').src=logo()}
+  if(activeAccount&&typeof backup.accountPhoto==='string'&&backup.accountPhoto.trim()){
+   const accounts=readAccounts();const index=accounts.findIndex(account=>account.id===activeAccount.id);
+   if(index>=0){accounts[index]={...accounts[index],photo:backup.accountPhoto};localStorage.setItem(ACCOUNTS_KEY,JSON.stringify(accounts));activeAccount={...activeAccount,photo:backup.accountPhoto};profilePhotoDraft=backup.accountPhoto}
+  }
+  if(!persist()){S.docs=previous;S.certificates=previousCertificates;S.deletedIds=previousDeletedIds;S.logo=previousLogo;S.logoSource=previousLogoSource;if(activeAccount&&previousAccountPhoto!==''&&(!backup.accountPhoto||!backup.accountPhoto.trim()))activeAccount.photo=previousAccountPhoto;$('hl').src=logo();if(certificateBlobs.length)await removeCertificateFiles(certificateBlobs.map(item=>item.id));render();return}
   for(const d of backup.docs)if(S.docs.includes(d))cloud(d);
   render();if($('hi').classList.contains('on'))list();if($('certificates').classList.contains('on'))renderCertificateList();stat('Cadangan digabung: '+added+' kegiatan baru, '+updated+' diperbarui, '+certificatesToAdd.length+' sertifikat ditambahkan')
  }catch(err){console.error('Gagal mengimpor cadangan:',err);alert('Gagal mengimpor cadangan: '+(err&&err.message||err))}};
