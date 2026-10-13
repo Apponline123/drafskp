@@ -578,6 +578,103 @@ header .header-copy{display:block;margin-top:4px;color:rgba(26,56,75,.82);font-s
       padding: 28px 20px 30px;
     }
   }
+
+  @media (max-width: 600px) {
+    header {
+      gap: 9px;
+    }
+
+    header > div:nth-child(2) {
+      min-width: 0;
+      flex: 1;
+    }
+
+    header .header-copy {
+      display: none;
+    }
+
+    header small {
+      line-height: 1.35;
+    }
+
+    #appShell:not([hidden]) {
+      padding: 8px 10px 22px;
+    }
+
+    #appShell > .app-nav {
+      gap: 3px;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scrollbar-width: none;
+    }
+
+    #appShell > .app-nav::-webkit-scrollbar {
+      display: none;
+    }
+
+    #appShell > .app-nav button {
+      min-width: 58px;
+      flex: 1 0 58px;
+      font-size: 10px;
+    }
+
+    #appShell .tab {
+      min-width: 0;
+    }
+
+    .certificates-head {
+      gap: 8px;
+    }
+
+    .certificates-head h2 {
+      font-size: 20px;
+    }
+
+    .certificate-form {
+      padding: 13px;
+    }
+
+    .certificate-item {
+      gap: 9px;
+      padding: 11px;
+    }
+
+    .certificate-actions {
+      padding-left: 0;
+    }
+
+    .certificate-viewer {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      max-height: none;
+      margin: 0;
+      border-radius: 0;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    .certificate-viewer-head {
+      min-height: 58px;
+      padding: 9px 12px;
+    }
+
+    .certificate-viewer-head .btn {
+      padding: 9px 11px;
+      font-size: 12px;
+    }
+
+    .certificate-viewer-content {
+      height: calc(100% - 58px);
+      height: calc(100% - 58px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    }
+
+    .certificate-viewer-content img {
+      width: auto;
+      max-width: 100%;
+      max-height: 100%;
+    }
+  }
 </style></head><body>
 <header><img id="hl" alt=""><div><h1>Bukti Dukung SKP</h1><small>Dinas Perumahan Rakyat dan Kawasan Permukiman</small><div class="header-copy">© Copyright by Bayu Permana · <a href="mailto:permana.kp.mjm@gmail.com" style="color:inherit;text-decoration:none;">permana.kp.mjm@gmail.com</a></div></div><div id="st">Siap</div></header>
 <section class="login-wrap" id="loginPanel">
@@ -749,7 +846,7 @@ header .header-copy{display:block;margin-top:4px;color:rgba(26,56,75,.82);font-s
 <div class="history-tools certificate-tools"><label for="certificateSearch">Cari sertifikat</label><input id="certificateSearch" placeholder="Cari nama sertifikat..."><span id="certificateYearLabel"></span></div>
 <div id="certificateList" class="certificate-list"></div>
 <dialog id="certificateViewer" class="certificate-viewer" aria-labelledby="certificateViewerTitle">
-<div class="certificate-viewer-head"><strong id="certificateViewerTitle"></strong><button class="btn" type="button" id="closeCertificateViewer">Tutup</button></div>
+<div class="certificate-viewer-head"><strong id="certificateViewerTitle"></strong><a class="btn g" id="openCertificateFile" target="_blank" rel="noopener" hidden>Buka PDF</a><button class="btn" type="button" id="closeCertificateViewer">Tutup</button></div>
 <div class="certificate-viewer-content" id="certificateViewerContent"></div>
 </dialog>
 </section>
@@ -892,6 +989,7 @@ function renderCertificateList(){
 let certificatePreviewUrl='';
 function clearCertificatePreview(){
  if(certificatePreviewUrl){URL.revokeObjectURL(certificatePreviewUrl);certificatePreviewUrl=''}
+ $('openCertificateFile').removeAttribute('href');$('openCertificateFile').hidden=true;
  $('certificateViewerContent').replaceChildren()
 }
 function closeCertificatePreview(){
@@ -907,6 +1005,7 @@ async function viewCertificate(certificate){
   $('certificateViewerTitle').textContent=certificate.name;
   const content=$('certificateViewerContent');
   if(certificate.mime==='application/pdf'){
+   const openFile=$('openCertificateFile');openFile.href=certificatePreviewUrl;openFile.hidden=false;
    const frame=document.createElement('iframe');frame.title='Pratinjau '+certificate.name;frame.src=certificatePreviewUrl;content.append(frame)
   }else{
    const image=document.createElement('img');image.alt='Pratinjau '+certificate.name;image.src=certificatePreviewUrl;content.append(image)
