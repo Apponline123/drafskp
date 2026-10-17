@@ -899,7 +899,7 @@ const $=id=>document.getElementById(id),H=['Minggu','Senin','Selasa','Rabu','Kam
 const F=['termin','intervensi','tgl','jm','js','keg','tmp','has','driveEvidenceLink','kota','nm','nip','jab','anm','anip','ajab'];
 const ACCOUNTS_KEY='skp_accounts_v1';
 const CLOUD_API_KEY='skp_cloud_api_url_v1';
-const DEFAULT_CLOUD_API_URL='';
+const DEFAULT_CLOUD_API_URL='https://notulen-ai-summary.dellano2098.workers.dev';
 const CLOUD_PENDING_PREFIX='skp_cloud_pending_';
 const TERMS=['I','II','III','IV'];
 const INTERVENTIONS=['Briefing Staf','Pemugaran','RTLH Kumuh','RTLH Non Kumuh','Direktif Pimpinan'];
@@ -1229,7 +1229,7 @@ function bindPasswordToggle(inputId,buttonId){
  });
  syncState();
 }
-function cloudApiUrl(){return ''}
+function cloudApiUrl(){return(localStorage.getItem(CLOUD_API_KEY)||DEFAULT_CLOUD_API_URL).replace(/\/+$/,'')}
 async function cloudRequest(path,{method='GET',body,token=cloudToken}={}){
  const base=cloudApiUrl();if(!base)throw new Error('Cloud dinonaktifkan. Gunakan akun lokal di perangkat ini saja.');
  let result,response;
@@ -1878,8 +1878,6 @@ async function compactBackupDoc(entry){
  return doc
 }
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>tab(b.dataset.t));$('backPage').onclick=backToPreviousTab;
-try{localStorage.removeItem(CLOUD_API_KEY);localStorage.removeItem('notulen_ai_worker_endpoint_v1');}catch(error){console.error('Tidak dapat menonaktifkan cloud pada browser ini:',error)}
-if($('loginNoteText')){$('loginNoteText').textContent='Akun lokal tersimpan di perangkat ini. Data hanya dipakai di browser ini dan tidak menggunakan cloud.'}
 F.forEach(k=>{$(k).addEventListener('input',auto);if(k==='termin'||k==='intervensi')$(k).addEventListener('change',auto)});$('q').oninput=list;$('filterActivity').onchange=list;$('filterTermin').onchange=list;$('dashYear').onchange=e=>selectYear(e.target.value);$('historyYear').onchange=e=>selectYear(e.target.value);window.addEventListener('resize',fit);
  $('copyDriveEvidence').onclick=copyDriveEvidenceLink;
  $('driveEvidenceLink').addEventListener('input',()=>{$('driveEvidenceStatus').textContent='';updateDriveEvidenceActions()});
