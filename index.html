@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="id"><head><meta charset="utf-8"><title>Bukti Dukung SKP DPRKP</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#173b5e">
+<link rel="manifest" href="./manifest.webmanifest">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -139,6 +141,7 @@ input[type=file]{background:#f8fbfc}
 .login-welcome{position:relative;overflow:hidden;min-height:500px;padding:48px 42px;color:#fff;background:radial-gradient(circle at 85% 20%,#58c1a540 0,transparent 33%),linear-gradient(145deg,#0a456d,#087c80 72%,#1b9a81)}
 .login-welcome:after{content:"";position:absolute;width:290px;height:290px;right:-95px;bottom:-115px;border:1px solid #ffffff32;border-radius:50%;box-shadow:0 0 0 25px #ffffff0d,0 0 0 55px #ffffff08}
 .login-emblem{width:64px;height:64px;object-fit:contain;background:#fff;border-radius:16px;padding:7px;box-shadow:0 8px 22px #002c362e}
+.login-emblem-personal{object-fit:cover;border:3px solid #ffffffcc;border-radius:50%;padding:0}
 .login-kicker{margin:32px 0 9px;color:#bceee0;font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase}
 .login-welcome h2{max-width:400px;margin:0;font-size:34px;line-height:1.15;letter-spacing:-.7px}
 .login-welcome p{max-width:380px;margin:16px 0;color:#e1f3f2;line-height:1.7}
@@ -709,6 +712,7 @@ header .header-copy{display:block;margin-top:4px;color:rgba(26,56,75,.82);font-s
 <input id="profilePhotoInput" type="file" accept="image/*" capture="user" hidden>
 </div>
 <div class="row"><button class="btn" id="loginButton" type="button">Masuk</button><button class="btn g" id="registerButton" type="button">Buat akun baru</button><button class="btn g" id="cancelRegisterButton" type="button" hidden>Kembali masuk</button></div>
+<div class="row"><button class="btn g" id="installAppButton" type="button" hidden>Pasang aplikasi di laptop</button></div>
 <small class="login-status" id="loginStatus" role="status" aria-live="polite"></small>
 </div>
 </div>
@@ -894,6 +898,7 @@ const ACCOUNTS_KEY='skp_accounts_v1';
 const CLOUD_API_KEY='skp_cloud_api_url_v1';
 const DEFAULT_CLOUD_API_URL='';
 const CLOUD_PENDING_PREFIX='skp_cloud_pending_';
+let deferredInstallPrompt=null;
 const TERMS=['I','II','III','IV'];
 const INTERVENTIONS=['Briefing Staf','Pemugaran','RTLH Kumuh','RTLH Non Kumuh','Direktif Pimpinan'];
 const MINUTES_FIELDS=['mTitle','mMeeting','mDate','mStart','mEnd','mEvent','mChair','mRecorder','mParticipants','mContent','mCity','mNotulis','mNip'];
@@ -1185,6 +1190,14 @@ function renderDashboard(){
 }
 function minutesKey(key){return activeAccount&&!activeAccount.useLegacyMinutes?key+'_'+activeAccount.id:key}
 function readAccounts(){const raw=localStorage.getItem(ACCOUNTS_KEY);if(!raw)return[];const parsed=JSON.parse(raw);if(!Array.isArray(parsed))throw new Error('Daftar akun lokal tidak valid.');return parsed}
+function updateLoginPortrait(){
+ const username=$('loginName').value.trim().toLocaleLowerCase('id-ID');
+ const account=username?readAccounts().find(item=>item.normalizedName===username):null;
+ const photo=account&&typeof account.photo==='string'?account.photo:'';
+ $('loginLogo').src=photo||$('hl').src;
+ $('loginLogo').alt=photo?'Foto profil akun':'Logo DPRKP';
+ $('loginLogo').classList.toggle('login-emblem-personal',Boolean(photo))
+}
 function loginMessage(message,isError=false){$('loginStatus').textContent=message;$('loginStatus').style.color=isError?'#b42318':'var(--mu)'}
 function profileMessage(message,isError=false){$('profileEditStatus').textContent=message;$('profileEditStatus').style.color=isError?'#b42318':'var(--mu)'}
 function bindPasswordToggle(inputId,buttonId){
@@ -1379,7 +1392,7 @@ async function saveProfile(){
   if(newPassword&&await passwordDigest(currentPassword,activeAccount.salt)!==activeAccount.passwordHash){profileMessage('Kata sandi saat ini salah; profil belum disimpan.',true);return}
   const updated={...activeAccount,fullName,nip:$('profileNip').value.trim(),email,phone:$('profilePhone').value.trim(),position:$('profilePosition').value.trim(),rank:$('profileRank').value.trim(),unit:$('profileUnit').value.trim(),education:$('profileEducation').value.trim(),photo:profilePhotoDraft};
   if(newPassword){updated.salt=randomHex();updated.passwordHash=await passwordDigest(newPassword,updated.salt)}
-  accounts[index]=updated;localStorage.setItem(ACCOUNTS_KEY,JSON.stringify(accounts));activeAccount=updated;
+  accounts[index]=updated;localStorage.setItem(ACCOUNTS_KEY,JSON.stringify(accounts));activeAccount=updated;updateLoginPortrait();
   if(newPassword)$('loginPassword').value='';
   $('profileCurrentPassword').value=$('profileNewPassword').value=$('profileConfirmPassword').value='';
   renderDashboard();profileMessage(newPassword?'Profil diperbarui dan kata sandi berhasil diganti.':'Profil berhasil diperbarui.')
@@ -1778,7 +1791,8 @@ F.forEach(k=>{$(k).addEventListener('input',auto);if(k==='termin'||k==='interven
  $('nextCertificatePage').onclick=()=>{if(certificatePdfDocument&&certificatePdfPageNumber<certificatePdfDocument.numPages){certificatePdfPageNumber++;renderCertificatePdfPage()}};
  window.addEventListener('resize',()=>{if($('certificateViewer').open&&certificatePdfDocument)renderCertificatePdfPage()});
 MINUTES_FIELDS.forEach(id=>$(id).addEventListener('input',()=>{if(activeAccount){saveMinutesDraft();minutesPreview()}}));$('mDownload').onclick=downloadMinutes;$('mVoiceStart').onclick=startMinutesDictation;$('mVoiceStop').onclick=stopMinutesDictation;$('mAiSave').onclick=saveMinutesAiEndpoint;$('mAiSummarize').onclick=summarizeMinutesWithAi;$('mAiAppend').onclick=()=>applyMinutesAiSummary(false);$('mAiReplace').onclick=()=>applyMinutesAiSummary(true);$('mHistorySave').onclick=saveMinutesToHistory;$('mNew').onclick=()=>startNewMinutes();$('mHistorySearch').addEventListener('input',renderMinutesHistory);$('mHistoryList').addEventListener('click',handleMinutesHistoryClick);
-$('loginButton').onclick=loginAccount;$('registerButton').onclick=registerAccount;$('cancelRegisterButton').onclick=cancelRegistration;$('chooseProfilePhoto').onclick=()=>$('profilePhotoInput').click();$('profilePhotoInput').onchange=event=>chooseProfilePhoto(event.target.files[0]);$('loginPassword').addEventListener('keydown',event=>{if(event.key==='Enter'){if(registerMode)registerAccount();else loginAccount()}});$('loginName').addEventListener('keydown',event=>{if(event.key==='Enter')$('loginPassword').focus()});bindPasswordToggle('loginPassword','loginPasswordToggle');bindPasswordToggle('profileCurrentPassword','profileCurrentPasswordToggle');bindPasswordToggle('profileNewPassword','profileNewPasswordToggle');bindPasswordToggle('profileConfirmPassword','profileConfirmPasswordToggle');$('dashLogout').onclick=logoutAccount;$('dashEditor').onclick=()=>tab('ed');$('dashHistory').onclick=()=>tab('hi');
+$('loginButton').onclick=loginAccount;$('registerButton').onclick=registerAccount;$('cancelRegisterButton').onclick=cancelRegistration;$('chooseProfilePhoto').onclick=()=>$('profilePhotoInput').click();$('profilePhotoInput').onchange=event=>chooseProfilePhoto(event.target.files[0]);$('loginPassword').addEventListener('keydown',event=>{if(event.key==='Enter'){if(registerMode)registerAccount();else loginAccount()}});$('loginName').addEventListener('input',updateLoginPortrait);$('loginName').addEventListener('keydown',event=>{if(event.key==='Enter')$('loginPassword').focus()});bindPasswordToggle('loginPassword','loginPasswordToggle');bindPasswordToggle('profileCurrentPassword','profileCurrentPasswordToggle');bindPasswordToggle('profileNewPassword','profileNewPasswordToggle');bindPasswordToggle('profileConfirmPassword','profileConfirmPasswordToggle');$('dashLogout').onclick=logoutAccount;$('dashEditor').onclick=()=>tab('ed');$('dashHistory').onclick=()=>tab('hi');
+$('installAppButton').onclick=async()=>{if(!deferredInstallPrompt)return;try{await deferredInstallPrompt.prompt();const choice=await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;$('installAppButton').hidden=true;if(choice.outcome==='accepted')loginMessage('Aplikasi berhasil dipasang di laptop.')}catch(error){console.error('Aplikasi tidak dapat dipasang:',error);loginMessage('Aplikasi gagal dipasang. Coba pilih menu Instal aplikasi di browser.',true)}};
 $('editProfilePhoto').onclick=()=>$('editProfilePhotoInput').click();$('editProfilePhotoInput').onchange=event=>chooseEditProfilePhoto(event.target.files[0]);$('removeProfilePhoto').onclick=()=>{profilePhotoDraft='';renderDashboard();profileMessage('Foto akan dihapus setelah Simpan perubahan ditekan.')};$('saveProfile').onclick=saveProfile;
 $('fo').onchange=async e=>{for(const f of e.target.files)cur.foto.push(await resize(f,1000,'image/jpeg'));e.target.value='';thumbs();auto()};
 $('th').onclick=e=>{const i=e.target.dataset.i;if(i!=null){cur.foto.splice(i,1);thumbs();auto()}};
@@ -1822,5 +1836,9 @@ $('list').onclick=async e=>{const a=e.target.dataset.a,id=e.target.dataset.i;if(
  if(a==='c'){const n={...d,id:'d'+Date.now(),keg:(d.keg||'')+' (salinan)',upd:Date.now()};S.docs.unshift(n);persist();cloud(n);renderDashboard();list()}
  if(a==='x'&&confirm('Hapus LKH ini dari riwayat?')){const previous=S.docs,previousDeletedIds=S.deletedIds;S.docs=S.docs.filter(x=>x.id!==id);S.deletedIds=[...new Set([...(S.deletedIds||[]),id])];selectedIds.delete(id);if(!persist()){S.docs=previous;S.deletedIds=previousDeletedIds;return}if(cur.id===id)newDoc();try{db&&await db.collection('data/users/'+uid).doc(id).delete()}catch(_){}renderDashboard();list()}};
 (async function init(){try{$('hl').src=await defaultLogo()}catch(error){console.error('Logo resmi tidak dapat dimuat:',error);$('hl').src=defLogo()}
- $('loginLogo').src=$('hl').src;$('appShell').hidden=true;$('loginPanel').hidden=false;stat('Silakan masuk');$('loginName').focus()})();
+ $('appShell').hidden=true;$('loginPanel').hidden=false;updateLoginPortrait();stat('Silakan masuk');$('loginName').focus();
+ if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js').catch(error=>console.error('Service worker tidak dapat didaftarkan:',error))
+})();
+window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();deferredInstallPrompt=event;$('installAppButton').hidden=false});
+window.addEventListener('appinstalled',()=>{$('installAppButton').hidden=true;deferredInstallPrompt=null});
 </script></body></html>
