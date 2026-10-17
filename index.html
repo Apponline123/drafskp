@@ -984,6 +984,12 @@ function inferredIntervensi(d){
  if(/\b(?:pemugaran|pemugar|rehabilitasi|rehab|renovasi)\b/.test(text))return'Pemugaran';
  return''
 }
+function importedIntervensi(d){
+ const text=[d.keg,d.has,d.tmp].filter(value=>typeof value==='string').join(' ').toLocaleLowerCase('id-ID').replace(/[\u2010-\u2015]/g,'-');
+ if(/\b(?:briefing|brifing)\b/.test(text))return'Briefing Staf';
+ if(/\bdirektif\b/.test(text)||(/\b(?:arahan|instruksi|perintah)\b/.test(text)&&/\bpimpinan\b/.test(text)))return'Direktif Pimpinan';
+ return inferredIntervensi(d)
+}
 function canonicalIntervensi(value){
  const normalized=String(value||'').toLocaleLowerCase('id-ID').replace(/[^a-z0-9]+/g,' ').trim();
  const matched=INTERVENTIONS.find(name=>name.toLocaleLowerCase('id-ID')===normalized);
@@ -1892,7 +1898,7 @@ $('backupfile').onchange=async e=>{const file=e.target.files[0];e.target.value='
   for(const certificate of backupCertificates)if(!existingCertificates.has(certificate.id)){const data=certificateFiles.get(certificate.id);if(!data)throw new Error('File untuk sertifikat "'+certificate.name+'" tidak ada dalam cadangan.');const blob=certificateDataBlob(data,certificate.mime);if(certificate.size!==blob.size)throw new Error('Ukuran file sertifikat "'+certificate.name+'" tidak cocok.');certificatesToAdd.push(certificate);certificateBlobs.push({id:certificate.id,blob})}
   if(certificateBlobs.length)await storeCertificateFiles(certificateBlobs);
   const merged=new Map(S.docs.map(d=>[d.id,d]));let added=0,updated=0;
-  for(const entry of backup.docs){const candidate=normalizeDoc(entry),old=merged.get(candidate.id);if(!old||(candidate.upd||0)>(old.upd||0)){const d=await compactBackupDoc(candidate);merged.set(d.id,d);if(old)updated++;else added++}}
+  for(const entry of backup.docs){const candidate=normalizeDoc(entry),old=merged.get(candidate.id),detectedIntervensi=importedIntervensi(candidate);if(detectedIntervensi)candidate.intervensi=detectedIntervensi;if(!old||(candidate.upd||0)>(old.upd||0)){const d=await compactBackupDoc(candidate);merged.set(d.id,d);if(old)updated++;else added++}else if(detectedIntervensi&&old.intervensi!==detectedIntervensi){merged.set(old.id,{...old,intervensi:detectedIntervensi});updated++}}
   const previous=S.docs,previousCertificates=S.certificates||[],previousDeletedIds=S.deletedIds,previousLogo=S.logo,previousLogoSource=S.logoSource;S.docs=[...merged.values()];S.certificates=[...previousCertificates,...certificatesToAdd];S.deletedIds=(S.deletedIds||[]).filter(id=>!backup.docs.some(doc=>doc.id===id));if(Array.isArray(backup.deletedIds))S.deletedIds=[...new Set([...S.deletedIds,...backup.deletedIds.filter(id=>typeof id==='string')])];if(backup.logoSource==='custom'&&typeof backup.logo==='string'&&S.logoSource!=='custom'){S.logo=backup.logo;S.logoSource='custom';$('hl').src=logo()}
   if(activeAccount&&typeof backup.accountPhoto==='string'&&backup.accountPhoto.trim()){
    const accounts=readAccounts();const index=accounts.findIndex(account=>account.id===activeAccount.id);
