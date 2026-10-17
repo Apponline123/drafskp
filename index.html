@@ -1532,8 +1532,14 @@ async function out(name,data){
   stat('Unduhan dimulai: '+name);
  }catch(e){console.error('Gagal mengunduh file:',e);stat('Gagal mengunduh file');alert('Gagal mengunduh file: '+(e&&e.message||e))}
 }
-const fname=(d,e)=>{const raw=(d.keg||'kegiatan').trim().replace(/[^\p{L}\p{N}]+/gu,'').slice(0,50)||'kegiatan';const kegiatan=raw.charAt(0).toLocaleUpperCase('id-ID')+raw.slice(1).toLocaleLowerCase('id-ID');const tanggal=d.tgl?d.tgl.slice(8,10)+'-'+d.tgl.slice(5,7)+'-'+d.tgl.slice(0,4):'tanpa-tanggal';return kegiatan+'_'+tanggal+'.'+e};
-const mergedFname=(docs,e)=>fname(docs[0],e);
+function outputFilename(docs,extension){
+ const interventions=[...new Set(docs.map(doc=>canonicalIntervensi(doc.intervensi)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id'));
+ const intervention=interventions.length?interventions.map(name=>name.replace(/[^\p{L}\p{N}]+/gu,'_')).join('+'):'Tanpa_Intervensi';
+ const dates=docs.map(doc=>docYear(doc)?doc.tgl:'').filter(Boolean).sort();
+ const formatDate=date=>date?date.slice(8,10)+'-'+date.slice(5,7)+'-'+date.slice(0,4):'tanpa-tanggal';
+ const dateLabel=dates.length===0?'tanpa-tanggal':dates[0]===dates[dates.length-1]?formatDate(dates[0]):formatDate(dates[0])+'_sampai_'+formatDate(dates[dates.length-1]);
+ return intervention+'_'+dateLabel+'.'+extension
+}
 function loadImg(src){return new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=src})}
 async function pdf(docs=[getD()],reportType='activity'){stat('Membuat PDF…');const d=docs[0];
  try{const{jsPDF}=window.jspdf;const p=new jsPDF({unit:'mm',format:[215,330],orientation:'portrait'});
@@ -1567,7 +1573,7 @@ async function pdf(docs=[getD()],reportType='activity'){stat('Membuat PDF…');c
   const yn=y0+4.5+LH*(Math.max(A.length,B.length)+1)+24;font(true);
   [[d.anm,d.anip,cl],[d.nm,d.nip,cr]].forEach(([n,ip,c])=>{if(n){p.text(n,c,yn,{align:'center'});const w=wid(n);p.setLineWidth(.3);p.line(c-w/2,yn+1,c+w/2,yn+1)}font(false);if(ip)p.text('NIP. '+ip,c,yn+LH,{align:'center'})});y=yn+LH*2}
  const n=p.getNumberOfPages();for(let i=1;i<=n;i++){p.setPage(i);p.setFont('helvetica','normal');p.setFontSize(9);p.setTextColor(120);p.text('Halaman '+i+' / '+n,W/2,Hh-10,{align:'center'})}
- await out(reportType==='final'?'SKP_Final_Termin_I-IV_'+selectedYear+'.pdf':docs.length>1?mergedFname(docs,'pdf'):fname(d,'pdf'),p.output('blob'))}catch(e){console.error(e);alert('Gagal membuat PDF: '+(e&&e.message||e))}}
+ await out(outputFilename(docs,'pdf'),p.output('blob'))}catch(e){console.error(e);alert('Gagal membuat PDF: '+(e&&e.message||e))}}
 function dx(t,o={}){const ind=o.ind||0,h=o.h||0,x=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
  return `<w:p><w:pPr><w:jc w:val="${o.c?'center':o.l?'left':'both'}"/><w:spacing w:after="${o.a??60}" w:line="360" w:lineRule="auto"/><w:ind w:left="${ind}" w:hanging="${h}"/>${o.tab?'<w:tabs><w:tab w:val="left" w:pos="1900"/></w:tabs>':''}</w:pPr><w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/>${o.b?'<w:b/>':''}${o.u?'<w:u w:val="single"/>':''}<w:sz w:val="${o.sz||24}"/></w:rPr><w:t xml:space="preserve">${x(t)}</w:t></w:r></w:p>`}
 async function word(docs=[getD()],reportType='activity'){try{const d=docs[0],P=[],images=[];
@@ -1599,7 +1605,7 @@ async function word(docs=[getD()],reportType='activity'){try{const d=docs[0],P=[
  z.file('[Content_Types].xml','<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+types.join('')+'<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');
  z.file('word/document.xml','<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><w:body>'+P.join('')+'<w:sectPr><w:pgSz w:w="11906" w:h="18709" w:code="10000"/><w:pgMar w:top="1440" w:right="1134" w:bottom="1440" w:left="1134" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>');
  if(images.length){z.file('word/_rels/document.xml.rels','<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+images.map(im=>`<Relationship Id="${im.id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${im.name}"/>`).join('')+'</Relationships>');for(const im of images)z.file('word/media/'+im.name,im.bytes)}
- await out(reportType==='final'?'SKP_Final_Termin_I-IV_'+selectedYear+'.docx':docs.length>1?mergedFname(docs,'docx'):fname(d,'docx'),await z.generateAsync({type:'blob'}))
+ await out(outputFilename(docs,'docx'),await z.generateAsync({type:'blob'}))
  }catch(error){console.error('Gagal membuat file Word:',error);stat('Gagal membuat file Word');alert('Gagal membuat file Word: '+(error&&error.message||error))}}
 let minutesRecognition=null,minutesVoiceActive=false,minutesVoiceRetry=false,minutesVoiceRetryTimer=null,minutesVoiceError=false;
 function minutesVoiceStatus(message){$('mVoiceStatus').textContent=message;$('mVoiceStart').disabled=minutesVoiceActive;$('mVoiceStop').disabled=!minutesVoiceActive}
