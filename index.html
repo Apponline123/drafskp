@@ -968,7 +968,7 @@ function fmtTgl(v){if(!v)return'';const[d,m,y]=[v.slice(8),+v.slice(5,7),v.slice
 function hari(v){return v?H[new Date(v+'T12:00:00').getDay()]:''}
 function pukul(d){const f=t=>(t||'').replace(':','.');return d.jm?f(d.jm)+(d.js?' – '+f(d.js):'')+' WIB':''}
 function inferredIntervensi(d){
- const text=[d.keg,d.has,d.tmp].filter(value=>typeof value==='string').join(' ').toLocaleLowerCase('id-ID').replace(/[\u2010-\u2015]/g,'-');
+ const text=[d.intervensi,d.keg,d.has,d.tmp].filter(value=>typeof value==='string').join(' ').toLocaleLowerCase('id-ID').replace(/[\u2010-\u2015]/g,'-');
  if(/\bnon[\s-]*kumuh\b/.test(text))return'RTLH Non Kumuh';
  if(/\bdirektif\b/.test(text)||(/\b(?:arahan|instruksi|perintah)\b/.test(text)&&/\bpimpinan\b/.test(text)))return'Direktif Pimpinan';
  if(/\b(?:briefing|brifing)\b/.test(text))return'Briefing Staf';
@@ -976,7 +976,15 @@ function inferredIntervensi(d){
  if(/\b(?:pemugaran|pemugar|rehabilitasi|rehab|renovasi)\b/.test(text))return'Pemugaran';
  return''
 }
-function effectiveIntervensi(d){return INTERVENTIONS.includes(d.intervensi)?d.intervensi:inferredIntervensi(d)}
+function canonicalIntervensi(value){
+ const normalized=String(value||'').toLocaleLowerCase('id-ID').replace(/[^a-z0-9]+/g,' ').trim();
+ const matched=INTERVENTIONS.find(name=>name.toLocaleLowerCase('id-ID')===normalized);
+ if(matched)return matched;
+ if(/^(?:briefing|brifing)(?: staf)?$/.test(normalized))return'Briefing Staf';
+ return''
+}
+function effectiveIntervensi(d){return canonicalIntervensi(d.intervensi)||inferredIntervensi(d)}
+function matchesIntervensi(d,category){return !category||canonicalIntervensi(d.intervensi)===category||inferredIntervensi(d)===category}
 function validDriveEvidenceLink(value){
  if(typeof value!=='string'||!value.trim())return'';
  try{
@@ -1459,7 +1467,7 @@ async function logoutAccount(){
  const token=cloudToken;cloudToken='';clearTimeout(cloudSyncTimer);cloudSyncTimer=null;if(token)cloudRequest('/api/logout',{method:'POST',token}).catch(error=>console.warn('Sesi cloud tidak sempat ditutup di server:',error));
  $('appShell').hidden=true;$('loginPanel').hidden=false;$('loginPassword').value='';loginMessage('Anda sudah keluar. Masuk lagi untuk menggunakan aplikasi.');stat('Silakan masuk');$('loginName').focus()
 }
-function visibleDocs(){const q=$('q').value.toLowerCase(),term=$('filterTermin').value,activity=$('filterActivity').value;return yearDocs().filter(d=>(!activity||(effectiveIntervensi(d)||'Belum dikategorikan')===activity)&&(!term||d.termin===term)&&(d.keg+(effectiveIntervensi(d)||'')+d.tmp+d.tgl+fmtTgl(d.tgl)+d.has).toLowerCase().includes(q))}
+function visibleDocs(){const q=$('q').value.toLowerCase(),term=$('filterTermin').value,activity=$('filterActivity').value;return yearDocs().filter(d=>matchesIntervensi(d,activity)&&(!term||d.termin===term)&&(d.keg+(effectiveIntervensi(d)||'')+d.tmp+d.tgl+fmtTgl(d.tgl)+d.has).toLowerCase().includes(q))}
 function selectionUpdate(){
  const docs=yearDocs().filter(d=>selectedIds.has(d.id)),count=docs.length;
  const dates=new Set(docs.map(d=>d.tgl));
