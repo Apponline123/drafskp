@@ -1433,7 +1433,7 @@ async function registerAccount(){
   const account={id,username,normalizedName,salt,passwordHash:await passwordDigest(password,salt),storageKey:hasLegacyAccount?'lkh_v1':'lkh_user_'+id,useLegacyMinutes:accounts.length===0,photo:pendingProfilePhoto};
   accounts.push(account);localStorage.setItem(ACCOUNTS_KEY,JSON.stringify(accounts));
   loginMessage('Akun berhasil dibuat. Membuka aplikasi…');await openAccount(account)
- }catch(error){console.error('Akun lokal tidak dapat dibuat:',error);const quota=error&&/quota|storage full/i.test(error.name+' '+error.message);loginMessage(quota?'Penyimpanan browser penuh. Data kegiatan lama tetap aman dan tidak dihapus. Kosongkan ruang lalu coba lagi, atau daftar tanpa foto.':'Akun gagal dibuat: '+(error&&error.message||'Terjadi kesalahan. Data lama tidak diubah.'),true)}
+ }catch(error){console.error('Akun lokal tidak dapat dibuat:',error);const quota=error&&/quota|storage full/i.test(error.name+' '+error.message);loginMessage(quota?'Penyimpanan browser penuh. Data kegiatan lama tetap aman dan tidak dihapus. Kosongkan ruang lalu coba lagi, atau daftar tanpa foto.':error&&error.status===503?'Layanan akun sedang bermasalah. Pendaftaran mungkin sudah tercatat. Jangan daftar ulang dulu; coba masuk dengan nama pengguna dan kata sandi tadi. Jika belum bisa, administrator perlu memperbarui Worker dan tabel database cloud.':'Akun gagal dibuat: '+(error&&error.message||'Terjadi kesalahan. Data lama tidak diubah.'),true)}
  finally{$('registerButton').disabled=$('loginButton').disabled=false}
 }
 async function loginAccount(){
