@@ -899,7 +899,7 @@ const $=id=>document.getElementById(id),H=['Minggu','Senin','Selasa','Rabu','Kam
 const F=['termin','intervensi','tgl','jm','js','keg','tmp','has','driveEvidenceLink','kota','nm','nip','jab','anm','anip','ajab'];
 const ACCOUNTS_KEY='skp_accounts_v1';
 const CLOUD_API_KEY='skp_cloud_api_url_v1';
-const DEFAULT_CLOUD_API_URL='https://notulen-ai-summary.dellano2098.workers.dev';
+const DEFAULT_CLOUD_API_URL='';
 const CLOUD_PENDING_PREFIX='skp_cloud_pending_';
 const TERMS=['I','II','III','IV'];
 const INTERVENTIONS=['Briefing Staf','Pemugaran','RTLH Kumuh','RTLH Non Kumuh','Direktif Pimpinan'];
@@ -1229,7 +1229,7 @@ function bindPasswordToggle(inputId,buttonId){
  });
  syncState();
 }
-function cloudApiUrl(){return(localStorage.getItem(CLOUD_API_KEY)||DEFAULT_CLOUD_API_URL).replace(/\/+$/,'')}
+function cloudApiUrl(){return ''}
 async function cloudRequest(path,{method='GET',body,token=cloudToken}={}){
  const base=cloudApiUrl();if(!base)throw new Error('Cloud dinonaktifkan. Gunakan akun lokal di perangkat ini saja.');
  let result,response;
@@ -1419,21 +1419,12 @@ async function registerAccount(){
  $('registerButton').disabled=$('loginButton').disabled=true;loginMessage('Membuat akun…');
  try{
   const accounts=readAccounts(),normalizedName=username.toLocaleLowerCase('id-ID');
-  if(cloudApiUrl()){
-   const localAccount=accounts.find(item=>item.normalizedName===normalizedName);
-   if(localAccount){
-    if(await passwordDigest(password,localAccount.salt)!==localAccount.passwordHash){loginMessage('Nama pengguna ini sudah memiliki data lokal dengan kata sandi berbeda. Masuk menggunakan kata sandi lama untuk memindahkan data.',true);return}
-    try{await cloudLoginOrMigrate(username,password,localAccount);return}catch(error){if(error.status===409){loginMessage('Nama pengguna sudah memiliki akun cloud. Kembali ke layar masuk dan gunakan kata sandi akun tersebut.',true);return}throw error}
-   }
-   const created=await cloudRequest('/api/register',{method:'POST',token:'',body:{username,password,profile:{photo:pendingProfilePhoto},state:{skp:{docs:[],logo:null},minutes:{}}}});
-   await loginCloudAccount(created.user,created.state,created.token);return
-  }
   if(accounts.some(account=>account.normalizedName===normalizedName)){loginMessage('Nama pengguna ini sudah terdaftar di perangkat. Kembali ke layar masuk untuk menggunakan akun tersebut, atau pilih nama pengguna lain.',true);return}
   const id=randomHex(16),salt=randomHex(),hasLegacyAccount=accounts.length===0&&localStorage.getItem('lkh_v1')!==null;
   const account={id,username,normalizedName,salt,passwordHash:await passwordDigest(password,salt),storageKey:hasLegacyAccount?'lkh_v1':'lkh_user_'+id,useLegacyMinutes:accounts.length===0,photo:pendingProfilePhoto};
   accounts.push(account);localStorage.setItem(ACCOUNTS_KEY,JSON.stringify(accounts));
   loginMessage('Akun berhasil dibuat. Membuka aplikasi…');await openAccount(account)
- }catch(error){console.error('Akun lokal tidak dapat dibuat:',error);const quota=error&&/quota|storage full/i.test(error.name+' '+error.message);loginMessage(quota?'Penyimpanan browser penuh. Data kegiatan lama tetap aman dan tidak dihapus. Kosongkan ruang lalu coba lagi, atau daftar tanpa foto.':error&&error.status===503?'Layanan akun sedang bermasalah. Pendaftaran mungkin sudah tercatat. Jangan daftar ulang dulu; coba masuk dengan nama pengguna dan kata sandi tadi. Jika belum bisa, administrator perlu memperbarui Worker dan tabel database cloud.':'Akun gagal dibuat: '+(error&&error.message||'Terjadi kesalahan. Data lama tidak diubah.'),true)}
+ }catch(error){console.error('Akun lokal tidak dapat dibuat:',error);const quota=error&&/quota|storage full/i.test(error.name+' '+error.message);loginMessage(quota?'Penyimpanan browser penuh. Data kegiatan lama tetap aman dan tidak dihapus. Kosongkan ruang lalu coba lagi, atau daftar tanpa foto.':'Akun gagal dibuat: '+(error&&error.message||'Terjadi kesalahan. Data lama tidak diubah.'),true)}
  finally{$('registerButton').disabled=$('loginButton').disabled=false}
 }
 async function loginAccount(){
@@ -1442,18 +1433,9 @@ async function loginAccount(){
  $('registerButton').disabled=$('loginButton').disabled=true;loginMessage('Memeriksa akun…');
  try{
   const normalizedName=username.toLocaleLowerCase('id-ID'),account=readAccounts().find(item=>item.normalizedName===normalizedName);
-  if(cloudApiUrl()){
-   try{if(await cloudLoginOrMigrate(username,password,account))return}
-   catch(error){
-    if(error.code==='account_not_found'){loginMessage('Akun cloud belum ada. Jika akun ini belum pernah dibuat, pilih “Buat akun baru”.',true);return}
-    if(error.status){loginMessage(error.message,true);return}
-    if(!account){loginMessage(error.message,true);return}
-    console.error('Layanan cloud tidak tersedia; mencoba akun lokal di perangkat ini:',error)
-   }
-  }
   if(!account){loginMessage('Akun tidak ditemukan di perangkat ini. Buat akun baru jika baru pertama kali memakai aplikasi.',true);return}
   if(await passwordDigest(password,account.salt)!==account.passwordHash){loginMessage('Kata sandi salah.',true);return}
-  await openAccount(account);if(cloudApiUrl())stat('Masuk lokal saja · cloud tidak tersambung')
+  await openAccount(account)
  }catch(error){console.error('Login lokal gagal:',error);loginMessage(error.message||'Akun tidak dapat dibuka.',true)}
  finally{$('registerButton').disabled=$('loginButton').disabled=false}
 }
@@ -1878,6 +1860,8 @@ async function compactBackupDoc(entry){
  return doc
 }
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>tab(b.dataset.t));$('backPage').onclick=backToPreviousTab;
+try{localStorage.removeItem(CLOUD_API_KEY);localStorage.removeItem('notulen_ai_worker_endpoint_v1');}catch(error){console.error('Tidak dapat menonaktifkan cloud pada browser ini:',error)}
+if($('loginNoteText')){$('loginNoteText').textContent='Akun lokal tersimpan di perangkat ini. Data hanya dipakai di browser ini dan tidak menggunakan cloud.'}
 F.forEach(k=>{$(k).addEventListener('input',auto);if(k==='termin'||k==='intervensi')$(k).addEventListener('change',auto)});$('q').oninput=list;$('filterActivity').onchange=list;$('filterTermin').onchange=list;$('dashYear').onchange=e=>selectYear(e.target.value);$('historyYear').onchange=e=>selectYear(e.target.value);window.addEventListener('resize',fit);
  $('copyDriveEvidence').onclick=copyDriveEvidenceLink;
  $('driveEvidenceLink').addEventListener('input',()=>{$('driveEvidenceStatus').textContent='';updateDriveEvidenceActions()});
