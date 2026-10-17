@@ -1163,14 +1163,14 @@ async function handleCertificateAction(event){
  }
 }
 function parse(txt){
- let previousListLevel=-1;
+ let numberedLevel=-1,bulletLevel=-1;
  return txt.split('\n').map(line=>line.trim()).filter(Boolean).map(l=>{
   let c='t',level=0;
-  if(/^[A-Z]\.\s/.test(l)||(/[A-Z]{3}/.test(l)&&l===l.toUpperCase())){c='h';previousListLevel=-1}
-  else if(/^[-–•]\s+/.test(l)){c='bullet';level=previousListLevel<0?0:previousListLevel+1;previousListLevel=level}
-  else if(/^\d+[.)]\s/.test(l)){c='n';previousListLevel=level}
-  else if(/^[a-z][.)]\s/i.test(l)){c='s';level=1;previousListLevel=level}
-  else previousListLevel=-1;
+  if(/^[A-Z]\.\s/.test(l)||(/[A-Z]{3}/.test(l)&&l===l.toUpperCase())){c='h';numberedLevel=-1;bulletLevel=-1}
+  else if(/^[-–•]\s+/.test(l)){c='bullet';level=numberedLevel<0?0:numberedLevel+1;bulletLevel=level}
+  else if(/^\d+[.)]\s/.test(l)){c='n';numberedLevel=0;bulletLevel=-1}
+  else if(/^[a-z][.)]\s/i.test(l)){c='s';level=bulletLevel>=0?bulletLevel+1:numberedLevel>=0?numberedLevel+1:1}
+  else bulletLevel=-1;
   return{c,l,level}
  })
 }
