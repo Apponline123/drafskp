@@ -844,7 +844,7 @@ header .header-copy{display:block;margin-top:4px;color:rgba(26,56,75,.82);font-s
 <div class="history-tools"><label for="historyYear">Tahun SKP</label><select id="historyYear" aria-label="Pilih tahun SKP"></select><label for="filterActivity">Jenis kegiatan</label><select id="filterActivity"><option value="">Semua kegiatan</option><option value="Briefing Staf">Briefing Staf</option><option value="Pemugaran">Pemugaran</option><option value="RTLH Kumuh">RTLH Kumuh</option><option value="RTLH Non Kumuh">RTLH Non Kumuh</option><option value="Direktif Pimpinan">Direktif Pimpinan</option><option value="Belum dikategorikan">Belum dikategorikan</option></select><label for="filterTermin">Termin</label><select id="filterTermin"><option value="">Semua termin</option><option value="I">Termin I</option><option value="II">Termin II</option><option value="III">Termin III</option><option value="IV">Termin IV</option></select></div>
 <div class="history-tools"><span>Pindahkan data antarperangkat dengan file cadangan. Impor akan menggabungkan data, bukan menghapus riwayat ini.</span><button class="btn" id="backupout">⬇ Ekspor cadangan</button><button class="btn g" id="backupin">⬆ Impor cadangan</button><input type="file" id="backupfile" accept="application/json,.json" hidden></div>
 <div class="history-tools"><label><input class="history-pick" id="selectVisible" type="checkbox"> Pilih semua kegiatan yang tampil</label><span id="visibleCount"></span></div>
-<div class="history-tools"><span id="selcount">Pilih kegiatan dari tahun yang sama untuk digabung.</span><button class="btn o" id="mergepdf" disabled>Unduh gabungan PDF</button><button class="btn w" id="mergeword" disabled>Unduh gabungan Word</button></div>
+<div class="history-tools"><span id="selcount">Pilih kegiatan dari tahun yang sama untuk digabung atau diunduh satu-satu.</span><button class="btn o" id="mergepdf" disabled>Unduh gabungan PDF</button><button class="btn w" id="mergeword" disabled>Unduh gabungan Word</button><button class="btn" id="individualpdf" disabled>Unduh PDF satu-satu</button><button class="btn g" id="individualword" disabled>Unduh Word satu-satu</button></div>
 <div class="history-tools"><span id="finalcount">Laporan final akan menggabungkan kegiatan Termin I–IV pada tahun terpilih.</span><button class="btn o" id="finalpdf" disabled>Unduh PDF Final Tahun Ini</button><button class="btn w" id="finalword" disabled>Unduh Word Final Tahun Ini</button></div>
 <div id="list"></div>
 </section>
@@ -1486,6 +1486,7 @@ function selectionUpdate(){
  const dates=new Set(docs.map(d=>d.tgl));
  $('selcount').textContent=count===0?'Pilih beberapa kegiatan dari tahun '+(selectedYear||'tanpa tanggal')+' untuk digabung.':count===1?'Pilih minimal 2 kegiatan dari tahun yang sama untuk digabung.':count+' kegiatan tahun '+(selectedYear||'tanpa tanggal')+' dipilih · '+(dates.size===1?fmtTgl(docs[0].tgl):dates.size+' tanggal');
  $('mergepdf').disabled=$('mergeword').disabled=count<2;
+ $('individualpdf').disabled=$('individualword').disabled=count===0;
  const visible=visibleDocs(),visibleSelected=visible.filter(d=>selectedIds.has(d.id)).length;
  $('selectVisible').checked=visible.length>0&&visibleSelected===visible.length;
  $('selectVisible').indeterminate=visibleSelected>0&&visibleSelected<visible.length;
@@ -1499,6 +1500,30 @@ function selectedDocs(){
  if(docs.length<2){stat('Pilih minimal 2 kegiatan untuk digabung');return null}
  if(docs.some(d=>!d.tgl)){stat('Isi tanggal untuk semua kegiatan sebelum menggabungkan');return null}
  return docs.sort((a,b)=>a.tgl.localeCompare(b.tgl)||(a.jm||'').localeCompare(b.jm||''));
+}
+function selectedIndividualDocs(){
+ const docs=yearDocs().filter(doc=>selectedIds.has(doc.id));
+ if(!docs.length){stat('Pilih kegiatan yang ingin diunduh.');return null}
+ if(docs.some(doc=>!docYear(doc))){stat('Isi tanggal pelaksanaan semua kegiatan yang dipilih sebelum mengunduh.');return null}
+ return docs.sort((a,b)=>a.tgl.localeCompare(b.tgl)||(a.jm||'').localeCompare(b.jm||''))
+}
+async function downloadSelectedIndividually(format){
+ const docs=selectedIndividualDocs();if(!docs)return;
+ const buttons=[$('individualpdf'),$('individualword'),$('mergepdf'),$('mergeword')];
+ buttons.forEach(button=>button.disabled=true);
+ let completed=0,failed=0;
+ try{
+  for(const [index,doc] of docs.entries()){
+   const filename=outputFilename([doc],format==='pdf'?'pdf':'docx');
+   stat('Mengunduh '+(format==='pdf'?'PDF':'Word')+' '+(index+1)+' dari '+docs.length+': '+filename);
+   const success=format==='pdf'?await pdf([doc]):await word([doc]);
+   if(success)completed++;else failed++
+  }
+  stat(failed?'Unduhan selesai: '+completed+' berhasil, '+failed+' gagal.':'Selesai mengunduh '+completed+' file '+(format==='pdf'?'PDF':'Word')+' terpisah.')
+ }finally{
+  buttons.forEach(button=>button.disabled=false);
+  selectionUpdate()
+ }
 }
 function finalDocs(){save();const docs=yearDocs().filter(d=>TERMS.includes(d.termin)&&docYear(d));if(!docs.length){stat('Belum ada kegiatan bertanggal untuk laporan final tahun '+(selectedYear||'tanpa tanggal'));return null}return docs.sort((a,b)=>a.tgl.localeCompare(b.tgl)||(a.jm||'').localeCompare(b.jm||''))}
 function list(){const a=visibleDocs().sort((a,b)=>(b.tgl||'').localeCompare(a.tgl||'')||(a.jm||'').localeCompare(b.jm||'')),groupNames=[...INTERVENTIONS,'Belum dikategorikan'];
@@ -1532,7 +1557,7 @@ function tab(t,remember=true){
 }
 function backToPreviousTab(){const previous=tabHistory.pop();if(previous)tab(previous,false);$('backPage').hidden=tabHistory.length===0}
 async function out(name,data){
- if(dl){try{await dl.save({filename:name,data});stat('Unduhan dimulai');return}catch(e){if(e.code==='declined')return;console.error('Layanan unduhan aplikasi gagal:',e)}}
+ if(dl){try{await dl.save({filename:name,data});stat('Unduhan dimulai');return true}catch(e){if(e.code==='declined')return false;console.error('Layanan unduhan aplikasi gagal:',e)}}
  try{
   const blob=data instanceof Blob?data:new Blob([data],{type:'application/octet-stream'});
   if(!blob.size)throw new Error('File yang dibuat kosong.');
@@ -1540,8 +1565,8 @@ async function out(name,data){
   a.href=url;a.download=name;a.rel='noopener';a.style.display='none';document.body.appendChild(a);
   a.click();
   setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},60000);
-  stat('Unduhan dimulai: '+name);
- }catch(e){console.error('Gagal mengunduh file:',e);stat('Gagal mengunduh file');alert('Gagal mengunduh file: '+(e&&e.message||e))}
+  stat('Unduhan dimulai: '+name);return true;
+ }catch(e){console.error('Gagal mengunduh file:',e);stat('Gagal mengunduh file');alert('Gagal mengunduh file: '+(e&&e.message||e));return false}
 }
 function outputFilename(docs,extension){
  const interventions=[...new Set(docs.map(doc=>canonicalIntervensi(doc.intervensi)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id'));
@@ -1584,7 +1609,7 @@ async function pdf(docs=[getD()],reportType='activity'){stat('Membuat PDF…');c
   const yn=y0+4.5+LH*(Math.max(A.length,B.length)+1)+24;font(true);
   [[d.anm,d.anip,cl],[d.nm,d.nip,cr]].forEach(([n,ip,c])=>{if(n){p.text(n,c,yn,{align:'center'});const w=wid(n);p.setLineWidth(.3);p.line(c-w/2,yn+1,c+w/2,yn+1)}font(false);if(ip)p.text('NIP. '+ip,c,yn+LH,{align:'center'})});y=yn+LH*2}
  const n=p.getNumberOfPages();for(let i=1;i<=n;i++){p.setPage(i);p.setFont('helvetica','normal');p.setFontSize(9);p.setTextColor(120);p.text('Halaman '+i+' / '+n,W/2,Hh-10,{align:'center'})}
- await out(outputFilename(docs,'pdf'),p.output('blob'))}catch(e){console.error(e);alert('Gagal membuat PDF: '+(e&&e.message||e))}}
+ return await out(outputFilename(docs,'pdf'),p.output('blob'))}catch(e){console.error(e);alert('Gagal membuat PDF: '+(e&&e.message||e));return false}}
 function dx(t,o={}){const ind=o.ind||0,h=o.h||0,x=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
  return `<w:p><w:pPr><w:jc w:val="${o.c?'center':o.l?'left':'both'}"/><w:spacing w:after="${o.a??60}" w:line="360" w:lineRule="auto"/><w:ind w:left="${ind}" w:hanging="${h}"/>${o.tab?'<w:tabs><w:tab w:val="left" w:pos="1900"/></w:tabs>':''}</w:pPr><w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/>${o.b?'<w:b/>':''}${o.u?'<w:u w:val="single"/>':''}<w:sz w:val="${o.sz||24}"/></w:rPr><w:t xml:space="preserve">${x(t)}</w:t></w:r></w:p>`}
 async function word(docs=[getD()],reportType='activity'){try{const d=docs[0],P=[],images=[];
@@ -1616,8 +1641,8 @@ async function word(docs=[getD()],reportType='activity'){try{const d=docs[0],P=[
  z.file('[Content_Types].xml','<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+types.join('')+'<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');
  z.file('word/document.xml','<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><w:body>'+P.join('')+'<w:sectPr><w:pgSz w:w="11906" w:h="18709" w:code="10000"/><w:pgMar w:top="1440" w:right="1134" w:bottom="1440" w:left="1134" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>');
  if(images.length){z.file('word/_rels/document.xml.rels','<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+images.map(im=>`<Relationship Id="${im.id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${im.name}"/>`).join('')+'</Relationships>');for(const im of images)z.file('word/media/'+im.name,im.bytes)}
- await out(outputFilename(docs,'docx'),await z.generateAsync({type:'blob'}))
- }catch(error){console.error('Gagal membuat file Word:',error);stat('Gagal membuat file Word');alert('Gagal membuat file Word: '+(error&&error.message||error))}}
+ return await out(outputFilename(docs,'docx'),await z.generateAsync({type:'blob'}))
+ }catch(error){console.error('Gagal membuat file Word:',error);stat('Gagal membuat file Word');alert('Gagal membuat file Word: '+(error&&error.message||error));return false}}
 let minutesRecognition=null,minutesVoiceActive=false,minutesVoiceRetry=false,minutesVoiceRetryTimer=null,minutesVoiceError=false;
 function minutesVoiceStatus(message){$('mVoiceStatus').textContent=message;$('mVoiceStart').disabled=minutesVoiceActive;$('mVoiceStop').disabled=!minutesVoiceActive}
 function startMinutesDictation(){
@@ -1840,6 +1865,8 @@ $('lg').onchange=async e=>{if(e.target.files[0]){S.logo=await resize(e.target.fi
 $('bsave').onclick=()=>{clearTimeout(timer);if(save()){newDoc();stat('✓ Tersimpan — lembar baru siap')}};$('bpdf').onclick=()=>pdf();$('bdoc').onclick=()=>word();$('bnew').onclick=()=>{save();newDoc();tab('ed');scrollTo(0,0)};
 $('mergepdf').onclick=()=>{const docs=selectedDocs();if(docs)pdf(docs)};
 $('mergeword').onclick=()=>{const docs=selectedDocs();if(docs)word(docs)};
+$('individualpdf').onclick=()=>downloadSelectedIndividually('pdf');
+$('individualword').onclick=()=>downloadSelectedIndividually('word');
 $('finalpdf').onclick=()=>{const docs=finalDocs();if(docs)pdf(docs,'final')};
 $('finalword').onclick=()=>{const docs=finalDocs();if(docs)word(docs,'final')};
 $('backupout').onclick=async()=>{try{const stamp=new Date().toISOString().slice(0,10),certificateFiles=await certificateBackupData();const accountPhoto=activeAccount&&typeof activeAccount.photo==='string'?activeAccount.photo:'';await out('cadangan-skp-'+stamp+'.json',new Blob([JSON.stringify({version:3,exportedAt:new Date().toISOString(),docs:S.docs,certificates:S.certificates||[],certificateFiles,deletedIds:S.deletedIds||[],logo:S.logoSource==='custom'?S.logo:null,logoSource:S.logoSource==='custom'?'custom':null,accountPhoto},null,2)],{type:'application/json'}))}catch(error){console.error('Cadangan sertifikat gagal dibuat:',error);alert('Cadangan gagal dibuat: '+(error.message||error))}};
