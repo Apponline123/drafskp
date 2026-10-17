@@ -974,8 +974,8 @@ function pukul(d){const f=t=>(t||'').replace(':','.');return d.jm?f(d.jm)+(d.js?
 function inferredIntervensi(d){
  const text=[d.intervensi,d.keg,d.has,d.tmp].filter(value=>typeof value==='string').join(' ').toLocaleLowerCase('id-ID').replace(/[\u2010-\u2015]/g,'-');
  if(/\bnon[\s-]*kumuh\b/.test(text))return'RTLH Non Kumuh';
- if(/\bdirektif\b/.test(text)||(/\b(?:arahan|instruksi|perintah)\b/.test(text)&&/\bpimpinan\b/.test(text)))return'Direktif Pimpinan';
  if(/\b(?:briefing|brifing)\b/.test(text))return'Briefing Staf';
+ if(/\bdirektif\b/.test(text)||(/\b(?:arahan|instruksi|perintah)\b/.test(text)&&/\bpimpinan\b/.test(text)))return'Direktif Pimpinan';
  if(/\b(?:rtlh\b.{0,80}\bkumuh\b|\bkumuh\b.{0,80}\brtlh\b)/.test(text))return'RTLH Kumuh';
  if(/\b(?:pemugaran|pemugar|rehabilitasi|rehab|renovasi)\b/.test(text))return'Pemugaran';
  return''
@@ -1597,7 +1597,7 @@ async function out(name,data){
  }catch(e){console.error('Gagal mengunduh file:',e);stat('Gagal mengunduh file');alert('Gagal mengunduh file: '+(e&&e.message||e));return false}
 }
 function outputFilename(docs,extension){
- const interventions=[...new Set(docs.map(doc=>canonicalIntervensi(doc.intervensi)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id'));
+ const interventions=[...new Set(docs.map(effectiveIntervensi).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id'));
  const intervention=interventions.length?interventions.map(name=>name.replace(/[^\p{L}\p{N}]+/gu,'_')).join('+'):'Tanpa_Intervensi';
  const dates=docs.map(doc=>docYear(doc)?doc.tgl:'').filter(Boolean).sort();
  const formatDate=date=>date?date.slice(8,10)+'-'+date.slice(5,7)+'-'+date.slice(0,4):'tanpa-tanggal';
