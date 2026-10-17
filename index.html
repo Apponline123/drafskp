@@ -843,7 +843,7 @@ header .header-copy{display:block;margin-top:4px;color:rgba(26,56,75,.82);font-s
 </section>
 <section id="hi" class="tab">
 <input id="q" placeholder="Cari kegiatan / tempat / tanggal…">
-<div class="history-tools"><label for="historyYear">Tahun SKP</label><select id="historyYear" aria-label="Pilih tahun SKP"></select><label for="filterTermin">Termin</label><select id="filterTermin"><option value="">Semua termin</option><option value="I">Termin I</option><option value="II">Termin II</option><option value="III">Termin III</option><option value="IV">Termin IV</option></select></div>
+<div class="history-tools"><label for="historyYear">Tahun SKP</label><select id="historyYear" aria-label="Pilih tahun SKP"></select><label for="historyMonth">Bulan</label><select id="historyMonth" aria-label="Pilih bulan"><option value="">Semua bulan</option></select><label for="filterTermin">Termin</label><select id="filterTermin"><option value="">Semua termin</option><option value="I">Termin I</option><option value="II">Termin II</option><option value="III">Termin III</option><option value="IV">Termin IV</option></select></div>
 <div class="history-tools"><span>Pindahkan data antarperangkat dengan file cadangan. Impor akan menggabungkan data, bukan menghapus riwayat ini.</span><button class="btn" id="backupout">⬇ Ekspor cadangan</button><button class="btn g" id="backupin">⬆ Impor cadangan</button><input type="file" id="backupfile" accept="application/json,.json" hidden></div>
 <div class="history-tools"><label><input class="history-pick" id="selectVisible" type="checkbox"> Pilih semua kegiatan yang tampil</label><span id="visibleCount"></span></div>
 <div class="history-tools"><span id="selcount">Pilih kegiatan dari tahun yang sama untuk digabung.</span><button class="btn o" id="mergepdf" disabled>Unduh gabungan PDF</button><button class="btn w" id="mergeword" disabled>Unduh gabungan Word</button></div>
@@ -1472,7 +1472,13 @@ async function logoutAccount(){
  const token=cloudToken;cloudToken='';clearTimeout(cloudSyncTimer);cloudSyncTimer=null;if(token)cloudRequest('/api/logout',{method:'POST',token}).catch(error=>console.warn('Sesi cloud tidak sempat ditutup di server:',error));
  $('appShell').hidden=true;$('loginPanel').hidden=false;$('loginPassword').value='';loginMessage('Anda sudah keluar. Masuk lagi untuk menggunakan aplikasi.');stat('Silakan masuk');$('loginName').focus()
 }
-function visibleDocs(){const q=$('q').value.toLowerCase(),term=$('filterTermin').value;return yearDocs().filter(d=>(!term||d.termin===term)&&(d.keg+(effectiveIntervensi(d)||'')+d.tmp+d.tgl+fmtTgl(d.tgl)+d.has).toLowerCase().includes(q))}
+function updateHistoryMonthFilter(){
+ const select=$('historyMonth'),selectedMonth=select.value;
+ const months=[...new Set(yearDocs().map(doc=>docYear(doc)?doc.tgl.slice(5,7):'').filter(Boolean))].sort((a,b)=>b.localeCompare(a));
+ select.innerHTML='<option value="">Semua bulan</option>'+months.map(month=>`<option value="${month}">${B[Number(month)-1]}</option>`).join('');
+ select.value=months.includes(selectedMonth)?selectedMonth:''
+}
+function visibleDocs(){const q=$('q').value.toLowerCase(),term=$('filterTermin').value,month=$('historyMonth').value;return yearDocs().filter(d=>(!month||d.tgl.slice(5,7)===month)&&(!term||d.termin===term)&&(d.keg+(effectiveIntervensi(d)||'')+d.tmp+d.tgl+fmtTgl(d.tgl)+d.has).toLowerCase().includes(q))}
 function selectionUpdate(){
  const docs=yearDocs().filter(d=>selectedIds.has(d.id)),count=docs.length;
  const dates=new Set(docs.map(d=>d.tgl));
@@ -1493,9 +1499,9 @@ function selectedDocs(){
  return docs.sort((a,b)=>a.tgl.localeCompare(b.tgl)||(a.jm||'').localeCompare(b.jm||''));
 }
 function finalDocs(){save();const docs=yearDocs().filter(d=>TERMS.includes(d.termin)&&docYear(d));if(!docs.length){stat('Belum ada kegiatan bertanggal untuk laporan final tahun '+(selectedYear||'tanpa tanggal'));return null}return docs.sort((a,b)=>a.tgl.localeCompare(b.tgl)||(a.jm||'').localeCompare(b.jm||''))}
-function list(){const a=visibleDocs().sort((a,b)=>(b.tgl||'').localeCompare(a.tgl||'')||(a.jm||'').localeCompare(b.jm||'')),groupNames=[...INTERVENTIONS,'Belum dikategorikan'];
- const card=d=>`<div class="card"><input class="history-pick" type="checkbox" aria-label="Pilih ${esc(d.keg||'kegiatan')}" data-select="${d.id}" ${selectedIds.has(d.id)?'checked':''}><div><b>${esc(d.keg||'(tanpa judul)')}</b><span>Termin ${esc(d.termin||'III')} · ${hari(d.tgl)}, ${fmtTgl(d.tgl)} · ${esc(d.tmp)}</span></div><div class="row"><button class="btn" data-a="o" data-i="${d.id}">Buka</button><button class="btn g" data-a="c" data-i="${d.id}">Duplikat</button><button class="btn r" data-a="x" data-i="${d.id}">Hapus</button></div></div>`;
- $('list').innerHTML=a.length?groupNames.map(name=>{const docs=a.filter(d=>(effectiveIntervensi(d)||'Belum dikategorikan')===name);return docs.length?`<h3>${esc(name)} <small style="font-weight:500;color:var(--mu)">(${docs.length} kegiatan)</small></h3>${docs.map(card).join('')}`:''}).join(''):'<p style="color:var(--mu)">Belum ada riwayat untuk filter ini.</p>';
+function list(){updateHistoryMonthFilter();const a=visibleDocs().sort((a,b)=>(b.tgl||'').localeCompare(a.tgl||'')||(a.jm||'').localeCompare(b.jm||''));
+ const card=d=>`<div class="card"><input class="history-pick" type="checkbox" aria-label="Pilih ${esc(d.keg||'kegiatan')}" data-select="${d.id}" ${selectedIds.has(d.id)?'checked':''}><div><b>${esc(d.keg||'(tanpa judul)')}</b><span>${esc(effectiveIntervensi(d)||'Belum dikategorikan')} · Termin ${esc(d.termin||'III')} · ${hari(d.tgl)}, ${fmtTgl(d.tgl)} · ${esc(d.tmp)}</span></div><div class="row"><button class="btn" data-a="o" data-i="${d.id}">Buka</button><button class="btn g" data-a="c" data-i="${d.id}">Duplikat</button><button class="btn r" data-a="x" data-i="${d.id}">Hapus</button></div></div>`;
+ $('list').innerHTML=a.length?a.map(card).join(''):'<p style="color:var(--mu)">Belum ada riwayat untuk filter ini.</p>';
  selectionUpdate()}
 function tab(t){document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('on',e.id===t));document.querySelectorAll('.app-nav button').forEach(b=>{const active=b.dataset.t===t;b.classList.toggle('on',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});if(t==='hi')list();else if(t==='certificates')renderCertificateList();else fit()}
 async function out(name,data){
@@ -1783,7 +1789,7 @@ async function compactBackupDoc(entry){
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>tab(b.dataset.t));
 try{localStorage.removeItem(CLOUD_API_KEY);localStorage.removeItem('notulen_ai_worker_endpoint_v1');}catch(error){console.error('Tidak dapat menonaktifkan cloud pada browser ini:',error)}
 if($('loginNoteText')){$('loginNoteText').textContent='Akun lokal tersimpan di perangkat ini. Data hanya dipakai di browser ini dan tidak menggunakan cloud.'}
-F.forEach(k=>{$(k).addEventListener('input',auto);if(k==='termin'||k==='intervensi')$(k).addEventListener('change',auto)});$('q').oninput=list;$('filterTermin').onchange=list;$('dashYear').onchange=e=>selectYear(e.target.value);$('historyYear').onchange=e=>selectYear(e.target.value);window.addEventListener('resize',fit);
+F.forEach(k=>{$(k).addEventListener('input',auto);if(k==='termin'||k==='intervensi')$(k).addEventListener('change',auto)});$('q').oninput=list;$('historyMonth').onchange=list;$('filterTermin').onchange=list;$('dashYear').onchange=e=>selectYear(e.target.value);$('historyYear').onchange=e=>selectYear(e.target.value);window.addEventListener('resize',fit);
  $('copyDriveEvidence').onclick=copyDriveEvidenceLink;
  $('driveEvidenceLink').addEventListener('input',()=>{$('driveEvidenceStatus').textContent='';updateDriveEvidenceActions()});
  $('certificateDate').value=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);$('saveCertificate').onclick=saveCertificate;$('certificateSearch').oninput=renderCertificateList;$('certificateList').onclick=handleCertificateAction;$('closeCertificateViewer').onclick=closeCertificatePreview;$('certificateViewer').addEventListener('cancel',clearCertificatePreview);
