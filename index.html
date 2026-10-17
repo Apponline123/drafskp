@@ -1506,10 +1506,21 @@ function list(){const a=visibleDocs().sort((a,b)=>(b.tgl||'').localeCompare(a.tg
  const monthGroups=new Map();
  for(const doc of a){const month=docYear(doc)?doc.tgl.slice(0,7):'';if(!monthGroups.has(month))monthGroups.set(month,[]);monthGroups.get(month).push(doc)}
  const months=[...monthGroups.keys()].sort((left,right)=>right.localeCompare(left));
- $('list').innerHTML=a.length?months.map(month=>{
-  const docs=monthGroups.get(month),heading=month?B[Number(month.slice(5,7))-1]+' '+month.slice(0,4):'Tanggal belum diisi';
-  const groups=groupNames.map(name=>{const items=docs.filter(doc=>(effectiveIntervensi(doc)||'Belum dikategorikan')===name);return items.length?`<h4>${esc(name)} <small style="font-weight:500;color:var(--mu)">(${items.length} kegiatan)</small></h4>${items.map(card).join('')}`:''}).join('');
-  return `<h3>${esc(heading)}</h3>${groups}`
+ $('list').innerHTML=a.length?TERMS.map(termin=>{
+  const terminDocs=a.filter(doc=>(doc.termin||'III')===termin);
+  if(!terminDocs.length)return'';
+  const categories=groupNames.map(name=>{
+   const categoryDocs=terminDocs.filter(doc=>(effectiveIntervensi(doc)||'Belum dikategorikan')===name);
+   if(!categoryDocs.length)return'';
+   const categoryMonths=months.map(month=>{
+    const docs=categoryDocs.filter(doc=>(docYear(doc)?doc.tgl.slice(0,7):'')===month);
+    if(!docs.length)return'';
+    const heading=month?B[Number(month.slice(5,7))-1]+' '+month.slice(0,4):'Tanggal belum diisi';
+    return `<h5>${esc(heading)} <small style="font-weight:500;color:var(--mu)">(${docs.length} kegiatan)</small></h5>${docs.map(card).join('')}`
+   }).join('');
+   return `<h4>${esc(name)} <small style="font-weight:500;color:var(--mu)">(${categoryDocs.length} kegiatan)</small></h4>${categoryMonths}`
+  }).join('');
+  return `<h3>Termin ${termin} <small style="font-weight:500;color:var(--mu)">(${terminDocs.length} kegiatan)</small></h3>${categories}`
  }).join(''):'<p style="color:var(--mu)">Belum ada riwayat untuk filter ini.</p>';
  selectionUpdate()}
 function tab(t,remember=true){
