@@ -984,7 +984,7 @@ function canonicalIntervensi(value){
  return''
 }
 function effectiveIntervensi(d){return canonicalIntervensi(d.intervensi)||inferredIntervensi(d)}
-function matchesIntervensi(d,category){return !category||canonicalIntervensi(d.intervensi)===category||inferredIntervensi(d)===category}
+function matchesIntervensi(d,category){return !category||canonicalIntervensi(d.intervensi)===category}
 function validDriveEvidenceLink(value){
  if(typeof value!=='string'||!value.trim())return'';
  try{
