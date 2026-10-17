@@ -1211,6 +1211,10 @@ function renderDashboard(){
 }
 function minutesKey(key){return activeAccount&&!activeAccount.useLegacyMinutes?key+'_'+activeAccount.id:key}
 function readAccounts(){const raw=localStorage.getItem(ACCOUNTS_KEY);if(!raw)return[];const parsed=JSON.parse(raw);if(!Array.isArray(parsed))throw new Error('Daftar akun lokal tidak valid.');return parsed}
+function accountMatchesUsername(account,normalizedName){
+ const storedName=typeof account?.normalizedName==='string'?account.normalizedName:typeof account?.username==='string'?account.username.toLocaleLowerCase('id-ID'):'';
+ return storedName===normalizedName
+}
 function loginMessage(message,isError=false){$('loginStatus').textContent=message;$('loginStatus').style.color=isError?'#b42318':'var(--mu)'}
 function profileMessage(message,isError=false){$('profileEditStatus').textContent=message;$('profileEditStatus').style.color=isError?'#b42318':'var(--mu)'}
 function bindPasswordToggle(inputId,buttonId){
@@ -1420,7 +1424,7 @@ async function registerAccount(){
  try{
   const accounts=readAccounts(),normalizedName=username.toLocaleLowerCase('id-ID');
   if(cloudApiUrl()){
-   const localAccount=accounts.find(item=>item.normalizedName===normalizedName);
+   const localAccount=accounts.find(item=>accountMatchesUsername(item,normalizedName));
    if(localAccount){
     if(await passwordDigest(password,localAccount.salt)!==localAccount.passwordHash){loginMessage('Nama pengguna ini sudah memiliki data lokal dengan kata sandi berbeda. Masuk menggunakan kata sandi lama untuk memindahkan data.',true);return}
     try{await cloudLoginOrMigrate(username,password,localAccount);return}catch(error){if(error.status===409){loginMessage('Nama pengguna sudah memiliki akun cloud. Kembali ke layar masuk dan gunakan kata sandi akun tersebut.',true);return}throw error}
@@ -1428,7 +1432,7 @@ async function registerAccount(){
    const created=await cloudRequest('/api/register',{method:'POST',token:'',body:{username,password,profile:{photo:pendingProfilePhoto},state:{skp:{docs:[],logo:null},minutes:{}}}});
    await loginCloudAccount(created.user,created.state,created.token);return
   }
-  if(accounts.some(account=>account.normalizedName===normalizedName)){loginMessage('Nama pengguna ini sudah terdaftar di perangkat. Kembali ke layar masuk untuk menggunakan akun tersebut, atau pilih nama pengguna lain.',true);return}
+  if(accounts.some(account=>accountMatchesUsername(account,normalizedName))){loginMessage('Nama pengguna ini sudah terdaftar di perangkat. Kembali ke layar masuk untuk menggunakan akun tersebut, atau pilih nama pengguna lain.',true);return}
   const id=randomHex(16),salt=randomHex(),hasLegacyAccount=accounts.length===0&&localStorage.getItem('lkh_v1')!==null;
   const account={id,username,normalizedName,salt,passwordHash:await passwordDigest(password,salt),storageKey:hasLegacyAccount?'lkh_v1':'lkh_user_'+id,useLegacyMinutes:accounts.length===0,photo:pendingProfilePhoto};
   accounts.push(account);localStorage.setItem(ACCOUNTS_KEY,JSON.stringify(accounts));
@@ -1441,7 +1445,7 @@ async function loginAccount(){
  if(!username||!password){loginMessage('Masukkan nama pengguna dan kata sandi.',true);return}
  $('registerButton').disabled=$('loginButton').disabled=true;loginMessage('Memeriksa akun…');
  try{
-  const normalizedName=username.toLocaleLowerCase('id-ID'),account=readAccounts().find(item=>item.normalizedName===normalizedName);
+  const normalizedName=username.toLocaleLowerCase('id-ID'),account=readAccounts().find(item=>accountMatchesUsername(item,normalizedName));
   if(cloudApiUrl()){
    try{if(await cloudLoginOrMigrate(username,password,account))return}
    catch(error){
