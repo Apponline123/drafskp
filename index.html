@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="id"><head><meta charset="utf-8"><title>Bukti Dukung SKP DPRKP</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/png" sizes="192x192" href="./app-icon-192.png">
+<link rel="apple-touch-icon" href="./app-icon-192.png">
+<link rel="manifest" href="./manifest.webmanifest">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -1931,4 +1934,5 @@ $('list').onclick=async e=>{const a=e.target.dataset.a,id=e.target.dataset.i;if(
  if(a==='x'&&confirm('Hapus LKH ini dari riwayat?')){const previous=S.docs,previousDeletedIds=S.deletedIds;S.docs=S.docs.filter(x=>x.id!==id);S.deletedIds=[...new Set([...(S.deletedIds||[]),id])];selectedIds.delete(id);if(!persist()){S.docs=previous;S.deletedIds=previousDeletedIds;return}if(cur.id===id)newDoc();try{db&&await db.collection('data/users/'+uid).doc(id).delete()}catch(_){}renderDashboard();list()}};
 (async function init(){try{$('hl').src=await defaultLogo()}catch(error){console.error('Logo resmi tidak dapat dimuat:',error);$('hl').src=defLogo()}
  $('loginLogo').src=$('hl').src;$('appShell').hidden=true;$('loginPanel').hidden=false;stat('Silakan masuk');$('loginName').focus()})();
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./service-worker.js').catch(error=>console.error('Service worker tidak dapat didaftarkan:',error))}
 </script></body></html>
