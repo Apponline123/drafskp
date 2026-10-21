@@ -1224,7 +1224,7 @@ function auto(){if($('driveEvidenceLink'))updateDriveEvidenceActions();$('hari')
 function renderDashboard(){
  updateYearFilters();const docs=yearDocs(),counts=TERMS.map(term=>docs.filter(doc=>(doc.termin||'III')===term).length),total=counts.reduce((sum,count)=>sum+count,0),filled=counts.filter(count=>count>0).length,max=Math.max(...counts,1);
  const top=Math.max(...counts),topTerm=top?TERMS[counts.indexOf(top)]:'';
- const displayName=activeAccount?(activeAccount.username||activeAccount.fullName):'Pengguna';
+ const displayName=activeAccount?(activeAccount.fullName||activeAccount.username):'Pengguna';
  $('dashGreeting').textContent=displayName;
  $('dashNip').textContent='NIP: '+(activeAccount&&activeAccount.nip?activeAccount.nip:'belum diisi');
  const avatarImage=$('dashAvatarImage'),avatarFallback=$('dashAvatarFallback');
