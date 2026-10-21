@@ -95,10 +95,17 @@ h3{margin:22px 0 7px;padding-bottom:8px;border-bottom:1px solid var(--bd);color:
 .btn.w{background-color:#2d6ca9;background-image:linear-gradient(135deg,#2d6ca9,#204e86)}
 .card{background:#fff;border-radius:12px;padding:13px 15px;margin-top:10px;box-shadow:0 3px 10px #17445a0d}
 .history-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0;padding:12px 14px;border:1px solid var(--bd);border-radius:12px;background:#f6fafb}
+.history-search{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(170px,auto) auto;align-items:center;gap:10px;margin-bottom:12px}
+.history-search label{margin:0;color:var(--mu);font-size:13px}
+.history-search input[type=date]{width:auto;min-width:170px}
+@media(max-width:700px){.history-search{grid-template-columns:minmax(0,1fr) minmax(170px,auto)}.history-search>input:first-child{grid-column:1/-1}.history-search .btn{grid-column:1/-1}}
 .history-tools span{color:var(--mu);font-size:13px;margin-right:auto}
 .history-tools label{margin:0;color:var(--mu);font-size:13px}
 .history-tools select{width:auto;min-width:160px}
 .history-tools .btn{font-size:13px}
+.history-day-divider{display:flex;align-items:center;gap:10px;margin:14px 0 8px;color:var(--mu);font-size:12px;font-weight:650;text-align:center}
+.history-day-divider:before,.history-day-divider:after{content:"";height:1px;flex:1;background:var(--bd)}
+.history-day-divider span{padding:5px 10px;border:1px solid var(--bd);border-radius:999px;background:#f6fafb;white-space:nowrap}
 .history-pick{width:19px;height:19px;accent-color:var(--pr2);cursor:pointer}
 #pv{margin-top:22px;background:linear-gradient(135deg,#dcebf0,#e9f2f5);padding:16px;border:1px solid #d1e2e8;border-radius:13px}
 input[type=file]{background:#f8fbfc}
@@ -845,8 +852,8 @@ header .header-copy{display:block;margin-top:4px;color:rgba(26,56,75,.82);font-s
 <div id="pv"><div id="paperWrap"><div id="paper" class="paper"></div></div></div>
 </section>
 <section id="hi" class="tab">
-<input id="q" placeholder="Cari kegiatan / tempat / tanggal…">
-<div class="history-tools"><label for="historyYear">Tahun SKP</label><select id="historyYear" aria-label="Pilih tahun SKP"></select><label for="filterActivity">Jenis kegiatan</label><select id="filterActivity"><option value="">Semua kegiatan</option><option value="Briefing Staf">Briefing Staf</option><option value="Pemugaran">Pemugaran</option><option value="RTLH Kumuh">RTLH Kumuh</option><option value="RTLH Non Kumuh">RTLH Non Kumuh</option><option value="RTLH Kumuh dan Non Kumuh">RTLH Kumuh dan Non Kumuh</option><option value="Direktif Pimpinan">Direktif Pimpinan</option><option value="Belum dikategorikan">Belum dikategorikan</option></select><label for="filterTermin">Termin</label><select id="filterTermin"><option value="">Semua termin</option><option value="I">Termin I</option><option value="II">Termin II</option><option value="III">Termin III</option><option value="IV">Termin IV</option></select><label for="historySort">Urutkan tanggal</label><select id="historySort" aria-label="Urutkan kegiatan berdasarkan tanggal"><option value="newest">Terbaru</option><option value="oldest">Terlama</option></select></div>
+<div class="history-search"><input id="q" placeholder="Cari kegiatan / tempat…"><label for="historyDateFilter">Tanggal</label><input id="historyDateFilter" type="date" aria-label="Cari kegiatan berdasarkan tanggal"><button class="btn g" id="clearHistorySearch" type="button">Bersihkan filter</button></div>
+<div class="history-tools"><label for="historyYear">Tahun SKP</label><select id="historyYear" aria-label="Pilih tahun SKP"></select><label for="filterActivity">Jenis kegiatan</label><select id="filterActivity"><option value="">Semua kegiatan</option><option value="Briefing Staf">Briefing Staf</option><option value="Pemugaran">Pemugaran</option><option value="RTLH Kumuh">RTLH Kumuh</option><option value="RTLH Non Kumuh">RTLH Non Kumuh</option><option value="RTLH Kumuh dan Non Kumuh">RTLH Kumuh dan Non Kumuh</option><option value="Direktif Pimpinan">Direktif Pimpinan</option><option value="Belum dikategorikan">Belum dikategorikan</option></select><label for="filterTermin">Termin</label><select id="filterTermin"><option value="">Semua termin</option><option value="I">Termin I</option><option value="II">Termin II</option><option value="III">Termin III</option><option value="IV">Termin IV</option></select></div>
 <div class="history-tools"><span>Pindahkan data antarperangkat dengan file cadangan. Impor akan menggabungkan data, bukan menghapus riwayat ini.</span><button class="btn g" id="restoreLegacyHistory" type="button">Pulihkan riwayat lama</button><button class="btn" id="backupout">⬇ Ekspor cadangan</button><button class="btn g" id="backupin">⬆ Impor cadangan</button><input type="file" id="backupfile" accept="application/json,.json" hidden></div>
 <div class="history-tools"><label><input class="history-pick" id="selectVisible" type="checkbox"> Pilih semua kegiatan yang tampil</label><span id="visibleCount"></span></div>
 <div class="history-tools"><span id="selcount">Pilih kegiatan dari tahun yang sama untuk digabung atau diunduh satu-satu.</span><button class="btn o" id="mergepdf" disabled>Unduh gabungan PDF</button><button class="btn w" id="mergeword" disabled>Unduh gabungan Word</button><button class="btn" id="individualpdf" disabled>Unduh PDF satu-satu</button><button class="btn g" id="individualword" disabled>Unduh Word satu-satu</button></div>
@@ -1499,7 +1506,7 @@ async function logoutAccount(){
  const token=cloudToken;cloudToken='';clearTimeout(cloudSyncTimer);cloudSyncTimer=null;if(token)cloudRequest('/api/logout',{method:'POST',token}).catch(error=>console.warn('Sesi cloud tidak sempat ditutup di server:',error));
  $('appShell').hidden=true;$('loginPanel').hidden=false;$('loginPassword').value='';loginMessage('Anda sudah keluar. Masuk lagi untuk menggunakan aplikasi.');stat('Silakan masuk');$('loginName').focus()
 }
-function visibleDocs(){const q=$('q').value.toLowerCase(),term=$('filterTermin').value,activity=$('filterActivity').value;return yearDocs().filter(d=>matchesIntervensi(d,activity)&&(!term||d.termin===term)&&(d.keg+(effectiveIntervensi(d)||'')+d.tmp+d.tgl+fmtTgl(d.tgl)+d.has).toLowerCase().includes(q))}
+function visibleDocs(){const q=$('q').value.toLocaleLowerCase('id-ID'),date=$('historyDateFilter').value,term=$('filterTermin').value,activity=$('filterActivity').value;return yearDocs().filter(d=>(!date||d.tgl===date)&&matchesIntervensi(d,activity)&&(!term||d.termin===term)&&(d.keg+(effectiveIntervensi(d)||'')+d.tmp+d.tgl+fmtTgl(d.tgl)+d.has).toLocaleLowerCase('id-ID').includes(q))}
 function selectionUpdate(){
  const docs=yearDocs().filter(d=>selectedIds.has(d.id)),count=docs.length;
  const dates=new Set(docs.map(d=>d.tgl));
@@ -1564,8 +1571,8 @@ async function downloadSelectedIndividually(format){
  }
 }
 function finalDocs(){save();const docs=yearDocs().filter(d=>TERMS.includes(d.termin)&&docYear(d));if(!docs.length){stat('Belum ada kegiatan bertanggal untuk laporan final tahun '+(selectedYear||'tanpa tanggal'));return null}return docs.sort((a,b)=>a.tgl.localeCompare(b.tgl)||(a.jm||'').localeCompare(b.jm||''))}
-function list(){const direction=$('historySort').value==='oldest'?1:-1,a=visibleDocs().sort((a,b)=>direction*(a.tgl||'').localeCompare(b.tgl||'')||(a.jm||'').localeCompare(b.jm||'')),groupNames=[...INTERVENTIONS,'Belum dikategorikan'];
- const card=d=>`<div class="card"><input class="history-pick" type="checkbox" aria-label="Pilih ${esc(d.keg||'kegiatan')}" data-select="${d.id}" ${selectedIds.has(d.id)?'checked':''}><div><b>${esc(d.keg||'(tanpa judul)')}</b><span>Termin ${esc(d.termin||'III')} · ${hari(d.tgl)}, ${fmtTgl(d.tgl)} · ${esc(d.tmp)}</span></div><div class="row"><button class="btn" data-a="o" data-i="${d.id}">Buka</button><button class="btn g" data-a="c" data-i="${d.id}">Duplikat</button><button class="btn r" data-a="x" data-i="${d.id}">Hapus</button></div></div>`;
+function list(){const a=visibleDocs().sort((a,b)=>(b.tgl||'').localeCompare(a.tgl||'')||(a.jm||'').localeCompare(b.jm||'')),groupNames=[...INTERVENTIONS,'Belum dikategorikan'];
+ const card=d=>`<div class="card"><input class="history-pick" type="checkbox" aria-label="Pilih ${esc(d.keg||'kegiatan')}" data-select="${d.id}" ${selectedIds.has(d.id)?'checked':''}><div><b>${esc(d.keg||'(tanpa judul)')}</b><span>Intervensi: ${esc(effectiveIntervensi(d)||'Belum dikategorikan')} · Termin ${esc(d.termin||'III')} · ${hari(d.tgl)}, ${fmtTgl(d.tgl)} · ${esc(d.tmp)}</span></div><div class="row"><button class="btn" data-a="o" data-i="${d.id}">Buka</button><button class="btn g" data-a="c" data-i="${d.id}">Duplikat</button><button class="btn r" data-a="x" data-i="${d.id}">Hapus</button></div></div>`;
  const monthGroups=new Map();
  for(const doc of a){const month=docYear(doc)?doc.tgl.slice(0,7):'';if(!monthGroups.has(month))monthGroups.set(month,[]);monthGroups.get(month).push(doc)}
  const months=[...monthGroups.keys()].sort((left,right)=>right.localeCompare(left));
@@ -1579,7 +1586,10 @@ function list(){const direction=$('historySort').value==='oldest'?1:-1,a=visible
     const docs=categoryDocs.filter(doc=>(docYear(doc)?doc.tgl.slice(0,7):'')===month);
     if(!docs.length)return'';
     const heading=month?B[Number(month.slice(5,7))-1]+' '+month.slice(0,4):'Tanggal belum diisi';
-    return `<h5>${esc(heading)} <small style="font-weight:500;color:var(--mu)">(${docs.length} kegiatan)</small></h5>${docs.map(card).join('')}`
+    const dayGroups=new Map();
+    for(const doc of docs){const day=docYear(doc)?doc.tgl:'';if(!dayGroups.has(day))dayGroups.set(day,[]);dayGroups.get(day).push(doc)}
+    const daySections=[...dayGroups].map(([day,dayDocs])=>`<h5 class="history-day-divider"><span>${esc(day?hari(day)+', '+fmtTgl(day):'Tanggal belum diisi')}</span></h5>${dayDocs.map(card).join('')}`).join('');
+    return `<h5>${esc(heading)} <small style="font-weight:500;color:var(--mu)">(${docs.length} kegiatan)</small></h5>${daySections}`
    }).join('');
    return `<h4>${esc(name)} <small style="font-weight:500;color:var(--mu)">(${categoryDocs.length} kegiatan)</small></h4>${categoryMonths}`
   }).join('');
@@ -1890,10 +1900,10 @@ async function compactBackupDoc(entry){
  if(Array.isArray(doc.foto))for(let index=0;index<doc.foto.length;index++)doc.foto[index]=await compactBackupPhoto(doc.foto[index]);
  return doc
 }
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>tab(b.dataset.t));$('backPage').onclick=backToPreviousTab;$('historySort').onchange=list;
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>tab(b.dataset.t));$('backPage').onclick=backToPreviousTab;
 try{localStorage.removeItem(CLOUD_API_KEY);localStorage.removeItem('notulen_ai_worker_endpoint_v1');}catch(error){console.error('Tidak dapat menonaktifkan cloud pada browser ini:',error)}
 if($('loginNoteText')){$('loginNoteText').textContent='Akun lokal tersimpan di perangkat ini. Data hanya dipakai di browser ini dan tidak menggunakan cloud.'}
-F.forEach(k=>{$(k).addEventListener('input',auto);if(k==='termin'||k==='intervensi')$(k).addEventListener('change',auto)});$('q').oninput=list;$('filterActivity').onchange=list;$('filterTermin').onchange=list;$('dashYear').onchange=e=>selectYear(e.target.value);$('historyYear').onchange=e=>selectYear(e.target.value);window.addEventListener('resize',fit);
+F.forEach(k=>{$(k).addEventListener('input',auto);if(k==='termin'||k==='intervensi')$(k).addEventListener('change',auto)});$('q').oninput=list;$('historyDateFilter').onchange=()=>{const date=$('historyDateFilter').value;if(date&&date.slice(0,4)!==selectedYear)selectYear(date.slice(0,4));list()};$('clearHistorySearch').onclick=()=>{$('q').value='';$('historyDateFilter').value='';$('filterActivity').value='';$('filterTermin').value='';list()};$('filterActivity').onchange=list;$('filterTermin').onchange=list;$('dashYear').onchange=e=>selectYear(e.target.value);$('historyYear').onchange=e=>selectYear(e.target.value);window.addEventListener('resize',fit);
  $('copyDriveEvidence').onclick=copyDriveEvidenceLink;
  $('driveEvidenceLink').addEventListener('input',()=>{$('driveEvidenceStatus').textContent='';updateDriveEvidenceActions()});
  $('certificateDate').value=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);$('saveCertificate').onclick=saveCertificate;$('certificateSearch').oninput=renderCertificateList;$('certificateList').onclick=handleCertificateAction;$('closeCertificateViewer').onclick=closeCertificatePreview;$('certificateViewer').addEventListener('cancel',clearCertificatePreview);
