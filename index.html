@@ -1002,7 +1002,7 @@ function canonicalIntervensi(value){
  return''
 }
 function effectiveIntervensi(d){return canonicalIntervensi(d.intervensi)||inferredIntervensi(d)}
-function matchesIntervensi(d,category){return !category||canonicalIntervensi(d.intervensi)===category}
+function matchesIntervensi(d,category){return !category||(effectiveIntervensi(d)||'Belum dikategorikan')===category}
 function validDriveEvidenceLink(value){
  if(typeof value!=='string'||!value.trim())return'';
  try{
