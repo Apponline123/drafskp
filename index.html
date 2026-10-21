@@ -806,7 +806,7 @@ header .header-copy{display:block;margin-top:4px;color:rgba(26,56,75,.82);font-s
 <section id="ed" class="tab">
 <div class="grid">
 <div><label>Termin SKP</label><select id="termin"><option value="I">Termin I</option><option value="II">Termin II</option><option value="III" selected>Termin III</option><option value="IV">Termin IV</option></select></div>
-<div><label for="intervensi">Jenis intervensi SKP</label><select id="intervensi"><option value="">Pilih jenis intervensi</option><option>Briefing Staf</option><option>Pemugaran</option><option>RTLH Kumuh</option><option>RTLH Non Kumuh</option><option>Direktif Pimpinan</option></select></div>
+<div><label for="intervensi">Jenis intervensi SKP</label><select id="intervensi"><option value="">Pilih jenis intervensi</option><option>Briefing Staf</option><option>Pemugaran</option><option>Kumuh</option><option>Non Kumuh</option><option>RTLH Kumuh</option><option>RTLH Non Kumuh</option><option>Direktif Pimpinan</option></select></div>
 <div><label>Tanggal kegiatan</label><input type="date" id="tgl"></div>
 <div><label>Hari (otomatis)</label><input id="hari" readonly></div>
 <div><label>Pukul mulai</label><input type="time" id="jm" value="08:30"></div>
@@ -845,7 +845,7 @@ header .header-copy{display:block;margin-top:4px;color:rgba(26,56,75,.82);font-s
 </section>
 <section id="hi" class="tab">
 <input id="q" placeholder="Cari kegiatan / tempat / tanggal…">
-<div class="history-tools"><label for="historyYear">Tahun SKP</label><select id="historyYear" aria-label="Pilih tahun SKP"></select><label for="filterActivity">Jenis kegiatan</label><select id="filterActivity"><option value="">Semua kegiatan</option><option value="Briefing Staf">Briefing Staf</option><option value="Pemugaran">Pemugaran</option><option value="RTLH Kumuh">RTLH Kumuh</option><option value="RTLH Non Kumuh">RTLH Non Kumuh</option><option value="Direktif Pimpinan">Direktif Pimpinan</option><option value="Belum dikategorikan">Belum dikategorikan</option></select><label for="filterTermin">Termin</label><select id="filterTermin"><option value="">Semua termin</option><option value="I">Termin I</option><option value="II">Termin II</option><option value="III">Termin III</option><option value="IV">Termin IV</option></select></div>
+<div class="history-tools"><label for="historyYear">Tahun SKP</label><select id="historyYear" aria-label="Pilih tahun SKP"></select><label for="filterActivity">Jenis kegiatan</label><select id="filterActivity"><option value="">Semua kegiatan</option><option value="Briefing Staf">Briefing Staf</option><option value="Pemugaran">Pemugaran</option><option value="Kumuh">Kumuh</option><option value="Non Kumuh">Non Kumuh</option><option value="RTLH Kumuh">RTLH Kumuh</option><option value="RTLH Non Kumuh">RTLH Non Kumuh</option><option value="Direktif Pimpinan">Direktif Pimpinan</option><option value="Belum dikategorikan">Belum dikategorikan</option></select><label for="filterTermin">Termin</label><select id="filterTermin"><option value="">Semua termin</option><option value="I">Termin I</option><option value="II">Termin II</option><option value="III">Termin III</option><option value="IV">Termin IV</option></select></div>
 <div class="history-tools"><span>Pindahkan data antarperangkat dengan file cadangan. Impor akan menggabungkan data, bukan menghapus riwayat ini.</span><button class="btn" id="backupout">⬇ Ekspor cadangan</button><button class="btn g" id="backupin">⬆ Impor cadangan</button><input type="file" id="backupfile" accept="application/json,.json" hidden></div>
 <div class="history-tools"><label><input class="history-pick" id="selectVisible" type="checkbox"> Pilih semua kegiatan yang tampil</label><span id="visibleCount"></span></div>
 <div class="history-tools"><span id="selcount">Pilih kegiatan dari tahun yang sama untuk digabung atau diunduh satu-satu.</span><button class="btn o" id="mergepdf" disabled>Unduh gabungan PDF</button><button class="btn w" id="mergeword" disabled>Unduh gabungan Word</button><button class="btn" id="individualpdf" disabled>Unduh PDF satu-satu</button><button class="btn g" id="individualword" disabled>Unduh Word satu-satu</button></div>
@@ -902,7 +902,7 @@ const CLOUD_API_KEY='skp_cloud_api_url_v1';
 const DEFAULT_CLOUD_API_URL='';
 const CLOUD_PENDING_PREFIX='skp_cloud_pending_';
 const TERMS=['I','II','III','IV'];
-const INTERVENTIONS=['Briefing Staf','Pemugaran','RTLH Kumuh','RTLH Non Kumuh','Direktif Pimpinan'];
+const INTERVENTIONS=['Briefing Staf','Pemugaran','Kumuh','Non Kumuh','RTLH Kumuh','RTLH Non Kumuh','Direktif Pimpinan'];
 const MINUTES_FIELDS=['mTitle','mMeeting','mDate','mStart','mEnd','mEvent','mChair','mRecorder','mParticipants','mContent','mCity','mNotulis','mNip'];
 let bulkDownloadDirectory=null;
 const CLOUD_MINUTES_KEYS=['notulen_ai_worker_endpoint_v1','notulen_ai_summary_v1','notulen_history_v1','notulen_current_id_v1','notulen_draft_v1','notulen_deleted_ids_v1'];
