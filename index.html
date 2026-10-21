@@ -845,9 +845,9 @@ header .header-copy{display:block;margin-top:4px;color:rgba(26,56,75,.82);font-s
 <div id="pv"><div id="paperWrap"><div id="paper" class="paper"></div></div></div>
 </section>
 <section id="hi" class="tab">
-<div class="history-tools"><label for="q">Cari kegiatan / tempat</label><input id="q" placeholder="Ketik nama kegiatan atau tempat…"><label for="historyDate">Tanggal kegiatan</label><input id="historyDate" type="date" aria-label="Filter berdasarkan tanggal kegiatan"><button class="btn g" id="clearHistoryDate" type="button">Hapus tanggal</button></div>
+<input id="q" placeholder="Cari kegiatan / tempat / tanggal…">
 <div class="history-tools"><label for="historyYear">Tahun SKP</label><select id="historyYear" aria-label="Pilih tahun SKP"></select><label for="filterActivity">Jenis kegiatan</label><select id="filterActivity"><option value="">Semua kegiatan</option><option value="Briefing Staf">Briefing Staf</option><option value="Pemugaran">Pemugaran</option><option value="RTLH Kumuh">RTLH Kumuh</option><option value="RTLH Non Kumuh">RTLH Non Kumuh</option><option value="RTLH Kumuh dan Non Kumuh">RTLH Kumuh dan Non Kumuh</option><option value="Direktif Pimpinan">Direktif Pimpinan</option><option value="Belum dikategorikan">Belum dikategorikan</option></select><label for="filterTermin">Termin</label><select id="filterTermin"><option value="">Semua termin</option><option value="I">Termin I</option><option value="II">Termin II</option><option value="III">Termin III</option><option value="IV">Termin IV</option></select></div>
-<div class="history-tools"><span>Pindahkan data antarperangkat dengan file cadangan. Impor akan menggabungkan data, bukan menghapus riwayat ini.</span><button class="btn" id="backupout">⬇ Ekspor cadangan</button><button class="btn g" id="backupin">⬆ Impor cadangan</button><input type="file" id="backupfile" accept="application/json,.json" hidden></div>
+<div class="history-tools"><span>Pindahkan data antarperangkat dengan file cadangan. Impor akan menggabungkan data, bukan menghapus riwayat ini.</span><button class="btn g" id="restoreLegacyHistory" type="button">Pulihkan riwayat lama</button><button class="btn" id="backupout">⬇ Ekspor cadangan</button><button class="btn g" id="backupin">⬆ Impor cadangan</button><input type="file" id="backupfile" accept="application/json,.json" hidden></div>
 <div class="history-tools"><label><input class="history-pick" id="selectVisible" type="checkbox"> Pilih semua kegiatan yang tampil</label><span id="visibleCount"></span></div>
 <div class="history-tools"><span id="selcount">Pilih kegiatan dari tahun yang sama untuk digabung atau diunduh satu-satu.</span><button class="btn o" id="mergepdf" disabled>Unduh gabungan PDF</button><button class="btn w" id="mergeword" disabled>Unduh gabungan Word</button><button class="btn" id="individualpdf" disabled>Unduh PDF satu-satu</button><button class="btn g" id="individualword" disabled>Unduh Word satu-satu</button></div>
 <small>Unduh satu-satu akan meminta folder tujuan sekali, lalu menyimpan setiap kegiatan sebagai file terpisah.</small>
@@ -1203,6 +1203,23 @@ function stat(t){$('st').textContent=t}
 function persist(){try{localStorage.setItem(activeAccount?activeAccount.storageKey:'lkh_v1',JSON.stringify(S));queueCloudSync()}catch(e){console.error('Data kegiatan gagal disimpan:',e);stat('Memori HP penuh');return false}return true}
 async function cloud(d){if(!db||!uid||!activeAccount)return;try{await db.collection('data/users/'+uid+'/skp_accounts/'+activeAccount.id).doc(d.id).set({json:JSON.stringify(d)});if(cur&&cur.id===d.id)stat('✓ Tersimpan (cloud)')}catch(e){console.error('Sinkronisasi cloud gagal:',e);if(cur&&cur.id===d.id)stat('✓ Tersimpan (perangkat)')}}
 function save(){const d=getD();if(!d.keg&&!d.has&&!d.tmp&&!(d.foto||[]).length&&!d.driveEvidenceLink){stat('Belum ada data untuk disimpan');return false}S.deletedIds=(S.deletedIds||[]).filter(id=>id!==d.id);const i=S.docs.findIndex(x=>x.id===d.id);i<0?S.docs.unshift(d):S.docs[i]=d;if(!persist())return false;renderDashboard();stat('✓ Tersimpan (perangkat)');cloud(d);return true}
+function restoreLegacyHistory(){
+ if(!activeAccount){stat('Masuk untuk memulihkan riwayat lama');return}
+ let legacy;
+ try{const raw=localStorage.getItem('lkh_v1');if(!raw){stat('Tidak ada riwayat lama yang ditemukan di perangkat ini');return}legacy=JSON.parse(raw)}
+ catch(error){console.error('Riwayat lama tidak dapat dibaca:',error);stat('Riwayat lama tidak dapat dibaca; data saat ini tidak diubah');return}
+ if(!legacy||!Array.isArray(legacy.docs)){stat('Format riwayat lama tidak valid; data saat ini tidak diubah');return}
+ const eligible=legacy.docs.filter(doc=>doc&&typeof doc==='object'&&typeof doc.id==='string'&&doc.id),known=new Set(S.docs.map(doc=>doc.id)),newDocs=eligible.filter(doc=>!known.has(doc.id));
+ if(!newDocs.length){stat('Tidak ada riwayat lama tambahan untuk dipulihkan');return}
+ if(!confirm('Pulihkan '+newDocs.length+' kegiatan dari penyimpanan lama perangkat dan gabungkan dengan riwayat saat ini? Riwayat saat ini tidak akan ditimpa.'))return;
+ const previousDocs=S.docs,previousDeletedIds=S.deletedIds;
+ const deleted=new Set([...(Array.isArray(S.deletedIds)?S.deletedIds:[]),...(Array.isArray(legacy.deletedIds)?legacy.deletedIds:[])]);
+ const merged=new Map(S.docs.map(doc=>[doc.id,doc]));
+ for(const entry of newDocs){const doc=normalizeDoc(entry);if(!deleted.has(doc.id))merged.set(doc.id,doc)}
+ S.docs=[...merged.values()];S.deletedIds=[...deleted];
+ if(!persist()){S.docs=previousDocs;S.deletedIds=previousDeletedIds;stat('Riwayat lama gagal dipulihkan karena penyimpanan perangkat penuh');return}
+ renderDashboard();list();stat('Riwayat lama dipulihkan: '+(S.docs.length-previousDocs.length)+' kegiatan ditambahkan')
+}
 function auto(){if($('driveEvidenceLink'))updateDriveEvidenceActions();$('hari').value=hari($('tgl').value);render();stat('Mengetik…');clearTimeout(timer);timer=setTimeout(save,700)}
 function renderDashboard(){
  updateYearFilters();const docs=yearDocs(),counts=TERMS.map(term=>docs.filter(doc=>(doc.termin||'III')===term).length),total=counts.reduce((sum,count)=>sum+count,0),filled=counts.filter(count=>count>0).length,max=Math.max(...counts,1);
@@ -1482,7 +1499,7 @@ async function logoutAccount(){
  const token=cloudToken;cloudToken='';clearTimeout(cloudSyncTimer);cloudSyncTimer=null;if(token)cloudRequest('/api/logout',{method:'POST',token}).catch(error=>console.warn('Sesi cloud tidak sempat ditutup di server:',error));
  $('appShell').hidden=true;$('loginPanel').hidden=false;$('loginPassword').value='';loginMessage('Anda sudah keluar. Masuk lagi untuk menggunakan aplikasi.');stat('Silakan masuk');$('loginName').focus()
 }
-function visibleDocs(){const q=$('q').value.trim().toLocaleLowerCase('id-ID'),date=$('historyDate').value,term=$('filterTermin').value,activity=$('filterActivity').value;return yearDocs().filter(d=>matchesIntervensi(d,activity)&&(!term||d.termin===term)&&(!date||d.tgl===date)&&(d.keg+(effectiveIntervensi(d)||'')+d.tmp+d.tgl+fmtTgl(d.tgl)+d.has).toLocaleLowerCase('id-ID').includes(q))}
+function visibleDocs(){const q=$('q').value.toLowerCase(),term=$('filterTermin').value,activity=$('filterActivity').value;return yearDocs().filter(d=>matchesIntervensi(d,activity)&&(!term||d.termin===term)&&(d.keg+(effectiveIntervensi(d)||'')+d.tmp+d.tgl+fmtTgl(d.tgl)+d.has).toLowerCase().includes(q))}
 function selectionUpdate(){
  const docs=yearDocs().filter(d=>selectedIds.has(d.id)),count=docs.length;
  const dates=new Set(docs.map(d=>d.tgl));
@@ -1876,7 +1893,7 @@ async function compactBackupDoc(entry){
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>tab(b.dataset.t));$('backPage').onclick=backToPreviousTab;
 try{localStorage.removeItem(CLOUD_API_KEY);localStorage.removeItem('notulen_ai_worker_endpoint_v1');}catch(error){console.error('Tidak dapat menonaktifkan cloud pada browser ini:',error)}
 if($('loginNoteText')){$('loginNoteText').textContent='Akun lokal tersimpan di perangkat ini. Data hanya dipakai di browser ini dan tidak menggunakan cloud.'}
-F.forEach(k=>{$(k).addEventListener('input',auto);if(k==='termin'||k==='intervensi')$(k).addEventListener('change',auto)});$('q').oninput=list;$('historyDate').onchange=list;$('clearHistoryDate').onclick=()=>{$('historyDate').value='';list()};$('filterActivity').onchange=list;$('filterTermin').onchange=list;$('dashYear').onchange=e=>selectYear(e.target.value);$('historyYear').onchange=e=>selectYear(e.target.value);window.addEventListener('resize',fit);
+F.forEach(k=>{$(k).addEventListener('input',auto);if(k==='termin'||k==='intervensi')$(k).addEventListener('change',auto)});$('q').oninput=list;$('filterActivity').onchange=list;$('filterTermin').onchange=list;$('dashYear').onchange=e=>selectYear(e.target.value);$('historyYear').onchange=e=>selectYear(e.target.value);window.addEventListener('resize',fit);
  $('copyDriveEvidence').onclick=copyDriveEvidenceLink;
  $('driveEvidenceLink').addEventListener('input',()=>{$('driveEvidenceStatus').textContent='';updateDriveEvidenceActions()});
  $('certificateDate').value=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);$('saveCertificate').onclick=saveCertificate;$('certificateSearch').oninput=renderCertificateList;$('certificateList').onclick=handleCertificateAction;$('closeCertificateViewer').onclick=closeCertificatePreview;$('certificateViewer').addEventListener('cancel',clearCertificatePreview);
@@ -1899,6 +1916,7 @@ $('finalpdf').onclick=()=>{const docs=finalDocs();if(docs)pdf(docs,'final')};
 $('finalword').onclick=()=>{const docs=finalDocs();if(docs)word(docs,'final')};
 $('backupout').onclick=async()=>{try{const stamp=new Date().toISOString().slice(0,10),certificateFiles=await certificateBackupData();const accountPhoto=activeAccount&&typeof activeAccount.photo==='string'?activeAccount.photo:'';await out('cadangan-skp-'+stamp+'.json',new Blob([JSON.stringify({version:3,exportedAt:new Date().toISOString(),docs:S.docs,certificates:S.certificates||[],certificateFiles,deletedIds:S.deletedIds||[],logo:S.logoSource==='custom'?S.logo:null,logoSource:S.logoSource==='custom'?'custom':null,accountPhoto},null,2)],{type:'application/json'}))}catch(error){console.error('Cadangan sertifikat gagal dibuat:',error);alert('Cadangan gagal dibuat: '+(error.message||error))}};
 $('backupin').onclick=()=>$('backupfile').click();
+$('restoreLegacyHistory').onclick=restoreLegacyHistory;
 $('backupfile').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;
  try{const backup=JSON.parse(await file.text());if(!backup||!Array.isArray(backup.docs)||backup.docs.some(d=>!d||typeof d!=='object'||typeof d.id!=='string'||!d.id))throw new Error('Format file cadangan tidak valid');
   if(backup.certificates!==undefined&&(!Array.isArray(backup.certificates)||backup.certificates.some(item=>!item||typeof item.id!=='string'||!item.id||typeof item.name!=='string'||typeof item.tgl!=='string'||!docYear({tgl:item.tgl})||typeof item.fileName!=='string'||!['application/pdf','image/jpeg','image/png'].includes(item.mime))))throw new Error('Daftar sertifikat dalam file cadangan tidak valid');
