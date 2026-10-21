@@ -1010,6 +1010,11 @@ function canonicalIntervensi(value){
 }
 function effectiveIntervensi(d){return canonicalIntervensi(d.intervensi)||inferredIntervensi(d)}
 function matchesIntervensi(d,category){return !category||(effectiveIntervensi(d)||'Belum dikategorikan')===category}
+function duplicateActivity(candidate){
+ const intervention=effectiveIntervensi(candidate),activity=String(candidate.keg||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('id-ID'),content=String(candidate.has||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('id-ID');
+ if(!docYear(candidate)||!intervention||!activity||!content)return null;
+ return S.docs.find(doc=>doc.id!==candidate.id&&doc.tgl===candidate.tgl&&effectiveIntervensi(doc)===intervention&&String(doc.keg||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('id-ID')===activity&&String(doc.has||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('id-ID')===content)||null
+}
 function validDriveEvidenceLink(value){
  if(typeof value!=='string'||!value.trim())return'';
  try{
@@ -1209,7 +1214,7 @@ function thumbs(){$('th').innerHTML=(cur.foto||[]).map((f,i)=>`<div><img src="${
 function stat(t){$('st').textContent=t}
 function persist(){try{localStorage.setItem(activeAccount?activeAccount.storageKey:'lkh_v1',JSON.stringify(S));queueCloudSync()}catch(e){console.error('Data kegiatan gagal disimpan:',e);stat('Memori HP penuh');return false}return true}
 async function cloud(d){if(!db||!uid||!activeAccount)return;try{await db.collection('data/users/'+uid+'/skp_accounts/'+activeAccount.id).doc(d.id).set({json:JSON.stringify(d)});if(cur&&cur.id===d.id)stat('✓ Tersimpan (cloud)')}catch(e){console.error('Sinkronisasi cloud gagal:',e);if(cur&&cur.id===d.id)stat('✓ Tersimpan (perangkat)')}}
-function save(){const d=getD();if(!d.keg&&!d.has&&!d.tmp&&!(d.foto||[]).length&&!d.driveEvidenceLink){stat('Belum ada data untuk disimpan');return false}S.deletedIds=(S.deletedIds||[]).filter(id=>id!==d.id);const i=S.docs.findIndex(x=>x.id===d.id);i<0?S.docs.unshift(d):S.docs[i]=d;if(!persist())return false;renderDashboard();stat('✓ Tersimpan (perangkat)');cloud(d);return true}
+function save(){const d=getD();if(!d.keg&&!d.has&&!d.tmp&&!(d.foto||[]).length&&!d.driveEvidenceLink){stat('Belum ada data untuk disimpan');return false}const duplicate=duplicateActivity(d);if(duplicate){stat('Kegiatan ini sudah tercatat pada '+fmtTgl(duplicate.tgl)+'. Tidak disimpan sebagai duplikat.');return false}S.deletedIds=(S.deletedIds||[]).filter(id=>id!==d.id);const i=S.docs.findIndex(x=>x.id===d.id);i<0?S.docs.unshift(d):S.docs[i]=d;if(!persist())return false;renderDashboard();stat('✓ Tersimpan (perangkat)');cloud(d);return true}
 function restoreLegacyHistory(){
  if(!activeAccount){stat('Masuk untuk memulihkan riwayat lama');return}
  let legacy;
