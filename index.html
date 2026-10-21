@@ -730,15 +730,16 @@ header .header-copy{display:block;margin-top:4px;color:rgba(26,56,75,.82);font-s
 <main>
 <section id="dash" class="tab on">
 <div class="dash-hero">
-<div class="dash-identity"><div class="dash-avatar" id="dashAvatar" aria-hidden="true"><img id="dashAvatarImage" alt="" hidden><span id="dashAvatarFallback">👤</span></div><div><div class="dash-eyebrow">Ringkasan kinerja</div><h2>Halo, <span id="dashGreeting">Pengguna</span> 👋</h2><p>Berikut ringkasan kegiatan SKP yang sudah dicatat.</p></div></div>
+<div class="dash-identity"><div class="dash-avatar" id="dashAvatar" aria-hidden="true"><img id="dashAvatarImage" alt="" hidden><span id="dashAvatarFallback">👤</span></div><div><div class="dash-eyebrow">Ringkasan kinerja</div><h2>Halo, <span id="dashGreeting">Pengguna</span> 👋</h2><p id="dashNip">NIP: belum diisi</p><p>Berikut ringkasan kegiatan SKP yang sudah dicatat.</p></div></div>
 <button class="btn" type="button" id="dashLogout">↪ Keluar akun</button>
 </div>
 <div class="year-filter"><label for="dashYear">Tahun SKP</label><select id="dashYear" aria-label="Pilih tahun SKP"></select></div>
 <details class="profile-edit" id="profileEdit">
 <summary><span><h3>Profil saya <small style="font-weight:500;color:var(--mu)">(opsional)</small></h3><p>Isi data kepegawaian hanya jika Anda ingin.</p></span><span class="profile-edit-action">Atur profil</span></summary>
 <div class="profile-edit-body">
-<p>Data email hanya untuk profil; akun tetap masuk dengan nama pengguna. Data tersimpan di perangkat ini.</p>
+<p>Username digunakan untuk masuk ke akun. Perubahan username akan berlaku saat login berikutnya.</p>
 <div class="grid">
+<div><label for="profileUsername">Nama pengguna (username)</label><input id="profileUsername" maxlength="32" autocomplete="username" minlength="3"></div>
 <div><label for="profileName">Nama lengkap</label><input id="profileName" maxlength="100" autocomplete="name"></div>
 <div><label for="profileNip">NIP</label><input id="profileNip" inputmode="numeric" maxlength="18" autocomplete="off"></div>
 <div><label for="profileEmail">Email</label><input id="profileEmail" type="email" maxlength="254" autocomplete="email"></div>
@@ -806,7 +807,7 @@ header .header-copy{display:block;margin-top:4px;color:rgba(26,56,75,.82);font-s
 <section id="ed" class="tab">
 <div class="grid">
 <div><label>Termin SKP</label><select id="termin"><option value="I">Termin I</option><option value="II">Termin II</option><option value="III" selected>Termin III</option><option value="IV">Termin IV</option></select></div>
-<div><label for="intervensi">Jenis intervensi SKP</label><select id="intervensi"><option value="">Pilih jenis intervensi</option><option>Briefing Staf</option><option>Pemugaran</option><option>Kumuh</option><option>Non Kumuh</option><option>RTLH Kumuh</option><option>RTLH Non Kumuh</option><option>Direktif Pimpinan</option></select></div>
+<div><label for="intervensi">Jenis intervensi SKP</label><select id="intervensi"><option value="">Pilih jenis intervensi</option><option>Briefing Staf</option><option>Pemugaran</option><option>RTLH Kumuh</option><option>RTLH Non Kumuh</option><option>RTLH Kumuh dan Non Kumuh</option><option>Direktif Pimpinan</option></select></div>
 <div><label>Tanggal kegiatan</label><input type="date" id="tgl"></div>
 <div><label>Hari (otomatis)</label><input id="hari" readonly></div>
 <div><label>Pukul mulai</label><input type="time" id="jm" value="08:30"></div>
@@ -845,7 +846,7 @@ header .header-copy{display:block;margin-top:4px;color:rgba(26,56,75,.82);font-s
 </section>
 <section id="hi" class="tab">
 <input id="q" placeholder="Cari kegiatan / tempat / tanggal…">
-<div class="history-tools"><label for="historyYear">Tahun SKP</label><select id="historyYear" aria-label="Pilih tahun SKP"></select><label for="filterActivity">Jenis kegiatan</label><select id="filterActivity"><option value="">Semua kegiatan</option><option value="Briefing Staf">Briefing Staf</option><option value="Pemugaran">Pemugaran</option><option value="Kumuh">Kumuh</option><option value="Non Kumuh">Non Kumuh</option><option value="RTLH Kumuh">RTLH Kumuh</option><option value="RTLH Non Kumuh">RTLH Non Kumuh</option><option value="Direktif Pimpinan">Direktif Pimpinan</option><option value="Belum dikategorikan">Belum dikategorikan</option></select><label for="filterTermin">Termin</label><select id="filterTermin"><option value="">Semua termin</option><option value="I">Termin I</option><option value="II">Termin II</option><option value="III">Termin III</option><option value="IV">Termin IV</option></select></div>
+<div class="history-tools"><label for="historyYear">Tahun SKP</label><select id="historyYear" aria-label="Pilih tahun SKP"></select><label for="filterActivity">Jenis kegiatan</label><select id="filterActivity"><option value="">Semua kegiatan</option><option value="Briefing Staf">Briefing Staf</option><option value="Pemugaran">Pemugaran</option><option value="RTLH Kumuh">RTLH Kumuh</option><option value="RTLH Non Kumuh">RTLH Non Kumuh</option><option value="RTLH Kumuh dan Non Kumuh">RTLH Kumuh dan Non Kumuh</option><option value="Direktif Pimpinan">Direktif Pimpinan</option><option value="Belum dikategorikan">Belum dikategorikan</option></select><label for="filterTermin">Termin</label><select id="filterTermin"><option value="">Semua termin</option><option value="I">Termin I</option><option value="II">Termin II</option><option value="III">Termin III</option><option value="IV">Termin IV</option></select></div>
 <div class="history-tools"><span>Pindahkan data antarperangkat dengan file cadangan. Impor akan menggabungkan data, bukan menghapus riwayat ini.</span><button class="btn" id="backupout">⬇ Ekspor cadangan</button><button class="btn g" id="backupin">⬆ Impor cadangan</button><input type="file" id="backupfile" accept="application/json,.json" hidden></div>
 <div class="history-tools"><label><input class="history-pick" id="selectVisible" type="checkbox"> Pilih semua kegiatan yang tampil</label><span id="visibleCount"></span></div>
 <div class="history-tools"><span id="selcount">Pilih kegiatan dari tahun yang sama untuk digabung atau diunduh satu-satu.</span><button class="btn o" id="mergepdf" disabled>Unduh gabungan PDF</button><button class="btn w" id="mergeword" disabled>Unduh gabungan Word</button><button class="btn" id="individualpdf" disabled>Unduh PDF satu-satu</button><button class="btn g" id="individualword" disabled>Unduh Word satu-satu</button></div>
@@ -902,7 +903,7 @@ const CLOUD_API_KEY='skp_cloud_api_url_v1';
 const DEFAULT_CLOUD_API_URL='';
 const CLOUD_PENDING_PREFIX='skp_cloud_pending_';
 const TERMS=['I','II','III','IV'];
-const INTERVENTIONS=['Briefing Staf','Pemugaran','Kumuh','Non Kumuh','RTLH Kumuh','RTLH Non Kumuh','Direktif Pimpinan'];
+const INTERVENTIONS=['Briefing Staf','Pemugaran','RTLH Kumuh','RTLH Non Kumuh','RTLH Kumuh dan Non Kumuh','Direktif Pimpinan'];
 const MINUTES_FIELDS=['mTitle','mMeeting','mDate','mStart','mEnd','mEvent','mChair','mRecorder','mParticipants','mContent','mCity','mNotulis','mNip'];
 let bulkDownloadDirectory=null;
 const CLOUD_MINUTES_KEYS=['notulen_ai_worker_endpoint_v1','notulen_ai_summary_v1','notulen_history_v1','notulen_current_id_v1','notulen_draft_v1','notulen_deleted_ids_v1'];
@@ -977,6 +978,7 @@ function hari(v){return v?H[new Date(v+'T12:00:00').getDay()]:''}
 function pukul(d){const f=t=>(t||'').replace(':','.');return d.jm?f(d.jm)+(d.js?' – '+f(d.js):'')+' WIB':''}
 function inferredIntervensi(d){
  const text=[d.intervensi,d.keg,d.has,d.tmp].filter(value=>typeof value==='string').join(' ').toLocaleLowerCase('id-ID').replace(/[\u2010-\u2015]/g,'-');
+ if(/\brtlh\b.{0,80}\bkumuh\b/.test(text)&&/\brtlh\b.{0,80}\bnon[\s-]*kumuh\b/.test(text))return'RTLH Kumuh dan Non Kumuh';
  if(/\bnon[\s-]*kumuh\b/.test(text))return'RTLH Non Kumuh';
  if(/\b(?:briefing|brifing)\b/.test(text))return'Briefing Staf';
  if(/\bdirektif\b/.test(text)||(/\b(?:arahan|instruksi|perintah)\b/.test(text)&&/\bpimpinan\b/.test(text)))return'Direktif Pimpinan';
@@ -994,6 +996,8 @@ function canonicalIntervensi(value){
  const normalized=String(value||'').toLocaleLowerCase('id-ID').replace(/[^a-z0-9]+/g,' ').trim();
  const matched=INTERVENTIONS.find(name=>name.toLocaleLowerCase('id-ID')===normalized);
  if(matched)return matched;
+ if(normalized==='kumuh')return'RTLH Kumuh';
+ if(normalized==='non kumuh')return'RTLH Non Kumuh';
  if(/^(?:briefing|brifing)(?: staf)?$/.test(normalized))return'Briefing Staf';
  return''
 }
@@ -1203,8 +1207,9 @@ function auto(){if($('driveEvidenceLink'))updateDriveEvidenceActions();$('hari')
 function renderDashboard(){
  updateYearFilters();const docs=yearDocs(),counts=TERMS.map(term=>docs.filter(doc=>(doc.termin||'III')===term).length),total=counts.reduce((sum,count)=>sum+count,0),filled=counts.filter(count=>count>0).length,max=Math.max(...counts,1);
  const top=Math.max(...counts),topTerm=top?TERMS[counts.indexOf(top)]:'';
- const displayName=activeAccount?(activeAccount.fullName||activeAccount.username):'Pengguna';
+ const displayName=activeAccount?(activeAccount.username||activeAccount.fullName):'Pengguna';
  $('dashGreeting').textContent=displayName;
+ $('dashNip').textContent='NIP: '+(activeAccount&&activeAccount.nip?activeAccount.nip:'belum diisi');
  const avatarImage=$('dashAvatarImage'),avatarFallback=$('dashAvatarFallback');
  if(activeAccount&&profilePhotoDraft){avatarImage.src=profilePhotoDraft;avatarImage.hidden=false;avatarFallback.hidden=true}
  else{avatarImage.removeAttribute('src');avatarImage.hidden=true;avatarFallback.hidden=false;avatarFallback.textContent=displayName.trim().charAt(0).toLocaleUpperCase('id-ID')||'👤'}
@@ -1389,8 +1394,9 @@ async function chooseEditProfilePhoto(file){
  $('editProfilePhotoInput').value=''
 }
 async function saveProfile(){
- const fullName=$('profileName').value.trim(),email=$('profileEmail').value.trim();
+ const username=$('profileUsername').value.trim(),normalizedName=username.toLocaleLowerCase('id-ID'),fullName=$('profileName').value.trim(),email=$('profileEmail').value.trim();
  const currentPassword=$('profileCurrentPassword').value,newPassword=$('profileNewPassword').value,confirmPassword=$('profileConfirmPassword').value;
+ if(username.length<3||username.length>32){profileMessage('Nama pengguna harus 3–32 karakter.',true);$('profileUsername').focus();return}
  if(email&&!$('profileEmail').validity.valid){profileMessage('Masukkan alamat email yang valid.',true);return}
  if(newPassword||confirmPassword){
   if(!currentPassword){profileMessage('Masukkan kata sandi saat ini untuk menggantinya.',true);return}
@@ -1399,19 +1405,21 @@ async function saveProfile(){
  }
  try{
   if(cloudToken){
-   const payload={profile:{fullName,nip:$('profileNip').value.trim(),email,phone:$('profilePhone').value.trim(),position:$('profilePosition').value.trim(),rank:$('profileRank').value.trim(),unit:$('profileUnit').value.trim(),education:$('profileEducation').value.trim(),photo:profilePhotoDraft}};
+   const payload={username,profile:{fullName,nip:$('profileNip').value.trim(),email,phone:$('profilePhone').value.trim(),position:$('profilePosition').value.trim(),rank:$('profileRank').value.trim(),unit:$('profileUnit').value.trim(),education:$('profileEducation').value.trim(),photo:profilePhotoDraft}};
    if(newPassword){payload.currentPassword=currentPassword;payload.newPassword=newPassword}
    const result=await cloudRequest('/api/profile',{method:'PUT',body:payload});
-   activeAccount={...activeAccount,...result.profile};
+   activeAccount={...activeAccount,...result.profile,username:result.username||username,normalizedName};
+   $('loginName').value=username;
    $('profileCurrentPassword').value=$('profileNewPassword').value=$('profileConfirmPassword').value='';
    renderDashboard();profileMessage(result.changedPassword?'Profil tersimpan dan kata sandi berhasil diganti di cloud.':'Profil berhasil disimpan dan tersinkron ke cloud.');return
   }
   const accounts=readAccounts(),index=accounts.findIndex(account=>account.id===activeAccount.id);
   if(index<0)throw new Error('Akun aktif tidak ditemukan di perangkat.');
+  if(accounts.some((account,accountIndex)=>accountIndex!==index&&(account.normalizedName||String(account.username||'').toLocaleLowerCase('id-ID'))===normalizedName)){profileMessage('Nama pengguna ini sudah digunakan akun lain di perangkat.',true);$('profileUsername').focus();return}
   if(newPassword&&await passwordDigest(currentPassword,activeAccount.salt)!==activeAccount.passwordHash){profileMessage('Kata sandi saat ini salah; profil belum disimpan.',true);return}
-  const updated={...activeAccount,fullName,nip:$('profileNip').value.trim(),email,phone:$('profilePhone').value.trim(),position:$('profilePosition').value.trim(),rank:$('profileRank').value.trim(),unit:$('profileUnit').value.trim(),education:$('profileEducation').value.trim(),photo:profilePhotoDraft};
+  const updated={...activeAccount,username,normalizedName,fullName,nip:$('profileNip').value.trim(),email,phone:$('profilePhone').value.trim(),position:$('profilePosition').value.trim(),rank:$('profileRank').value.trim(),unit:$('profileUnit').value.trim(),education:$('profileEducation').value.trim(),photo:profilePhotoDraft};
   if(newPassword){updated.salt=randomHex();updated.passwordHash=await passwordDigest(newPassword,updated.salt)}
-  accounts[index]=updated;localStorage.setItem(ACCOUNTS_KEY,JSON.stringify(accounts));activeAccount=updated;
+  accounts[index]=updated;localStorage.setItem(ACCOUNTS_KEY,JSON.stringify(accounts));activeAccount=updated;$('loginName').value=username;
   if(newPassword)$('loginPassword').value='';
   $('profileCurrentPassword').value=$('profileNewPassword').value=$('profileConfirmPassword').value='';
   renderDashboard();profileMessage(newPassword?'Profil diperbarui dan kata sandi berhasil diganti.':'Profil berhasil diperbarui.')
@@ -1461,7 +1469,7 @@ async function openAccount(account,cloudState=null){
  if(!Array.isArray(userData.docs))throw new Error('Data akun rusak atau formatnya tidak valid.');
  if(!Array.isArray(userData.deletedIds))userData.deletedIds=[];
  if(!Array.isArray(userData.certificates))userData.certificates=[];
- activeAccount=account;profilePhotoDraft=account.photo||'';$('profileName').value=account.fullName||'';$('profileNip').value=account.nip||'';$('profileEmail').value=account.email||'';$('profilePhone').value=account.phone||'';$('profilePosition').value=account.position||'';$('profileRank').value=account.rank||'';$('profileUnit').value=account.unit||'';$('profileEducation').value=account.education||'';$('profileEdit').open=false;profileMessage('');S=userData;S.docs=S.docs.map(normalizeDoc);
+ activeAccount=account;profilePhotoDraft=account.photo||'';$('profileUsername').value=account.username||'';$('profileName').value=account.fullName||'';$('profileNip').value=account.nip||'';$('profileEmail').value=account.email||'';$('profilePhone').value=account.phone||'';$('profilePosition').value=account.position||'';$('profileRank').value=account.rank||'';$('profileUnit').value=account.unit||'';$('profileEducation').value=account.education||'';$('profileEdit').open=false;profileMessage('');S=userData;S.docs=S.docs.map(normalizeDoc);
  if(S.logoSource!=='custom')S.logo=null;
  if(!S.logo)try{S.logo=await defaultLogo();S.logoSource='provided'}catch(error){console.error('Logo resmi tidak dapat dimuat:',error);S.logo=defLogo()}
  selectedIds.clear();selectedYear=String(new Date().getFullYear());tabHistory=[];currentTab='dash';$('loginPanel').hidden=true;$('appShell').hidden=false;$('loginPassword').value='';$('hl').src=logo();newDoc();list();minutesCurrentId=null;MINUTES_FIELDS.forEach(id=>$(id).value='');$('mAiResult').value='';$('mAiActions').style.display='none';minutesInit();cancelRegistration();renderDashboard();tab('dash');
